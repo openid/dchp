@@ -1,0 +1,29 @@
+# Generated spec artifacts (markdown2rfc / kramdown-rfc build output)
+*.html
+*.pdf
+*.txt
+!requirements.txt
+*.redxml
+*.upload
+/*-[0-9][0-9].xml
+/.refcache
+/versioned/
+archive.json
+report.xml
+
+# Build tooling
+/.gems/
+/.targets.mk
+/.venv/
+/node_modules/
+Gemfile.lock
+package-lock.json
+/lib/
+
+# Editor / OS files
+*~
+*.swp
+.tags
+/.vscode/
+/.idea/
+.DS_Store
