@@ -1,0 +1,91 @@
+name: Build DCHP specification
+
+on:
+  push:
+    paths:
+      - 'draft/**'
+      - 'tools/**'
+      - 'template/**'
+      - 'Makefile'
+      - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'draft/**'
+      - 'tools/**'
+      - 'template/**'
+      - 'Makefile'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOC: digital-credentials-harmonized-presentation
+
+jobs:
+  build:
+    name: Build HTML Working Group Draft and ISO Word document
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # HTML Working Group Draft (markdown2rfc / mmark), same tooling as other
+      # OpenID DCP specifications; published to GitHub Pages below.
+      - name: Render HTML Working Group Draft
+        run: make html
+
+      # ISO-styled Word document (pandoc), for sharing the draft with ISO.
+      # Delivered as a workflow artifact only; not published to the site.
+      - name: Install pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pandoc
+
+      - name: Render ISO Word document
+        run: make docx
+
+      - name: Assemble HTML for GitHub Pages
+        run: |
+          mkdir -p _site
+          cp build/*.html _site/
+          # Redirect the bare Pages URL to the Working Group Draft (avoids a root 404).
+          printf '<!doctype html>\n<meta http-equiv="refresh" content="0; url=%s-wg-draft.html">\n' \
+            "${{ env.DOC }}" > _site/index.html
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: _site
+
+      - name: Upload ISO Word document artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iso-word-document
+          path: build/${{ env.DOC }}.docx
+
+  publish-to-pages:
+    name: Publish Working Group Draft to GitHub Pages
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

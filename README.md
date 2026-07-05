@@ -24,9 +24,10 @@ for more information.
 
 ## Specifications
 
-The working group is at an early stage and no drafts have been published yet.
-Links to the Editor's Copy and Working Group Drafts will be added here as they
-become available.
+The current Working Group Draft is built automatically from [draft/](draft/) on
+every change to the `main` branch:
+
+- [Digital Credentials Harmonized Presentation — Working Group Draft](https://openid.github.io/dchp/digital-credentials-harmonized-presentation-wg-draft.html)
 
 ## Contributing
 
