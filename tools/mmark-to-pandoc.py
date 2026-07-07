@@ -43,7 +43,10 @@ HEADING = re.compile(r"^\s{0,3}\.?#{1,6}(?:\s|$)")
 PART_MARKER = re.compile(r"^\{(?:frontmatter|mainmatter|backmatter)\}\s*$")
 ABSTRACT_START = re.compile(r"^\.#\s+Abstract\b")
 IAL_LINE = re.compile(r"^\{:.*\}\s*$")            # kramdown inline attribute list
-FENCE = re.compile(r"^\s*(`{3,}|~{3,})")          # opening/closing code fence
+# A code-fence line (CommonMark rules, which mmark inherits): three or more
+# backticks/tildes indented at most 3 spaces — deeper indentation makes the
+# line indented-code *content*, not a fence. group(2) is the info string.
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 SPECIAL_HEADING = re.compile(r"^(\s{0,3})\.(#{1,6})")
 
 
@@ -89,10 +92,20 @@ def _process_body(lines: list[str]) -> list[str]:
     for line in lines:
         m = FENCE.match(line)
         if m:
-            marker = m.group(1)[0] * 3  # normalise to ``` or ~~~
+            marker, info = m.group(1), m.group(2)
             if not in_fence:
-                in_fence, fence = True, marker
-            elif marker == fence:
+                # A backtick fence's info string may not contain backticks
+                # (such a line is a paragraph, not a fence); tilde fences
+                # carry no such restriction.
+                if marker[0] == "~" or "`" not in info:
+                    in_fence, fence = True, marker
+            elif (
+                marker[0] == fence[0]
+                and len(marker) >= len(fence)
+                and not info.strip()
+            ):
+                # A closer must use the opener's character, be at least as
+                # long, and be bare; any other fence-looking line is content.
                 in_fence = False
             if not dropping_abstract:
                 out.append(line)
