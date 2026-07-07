@@ -73,6 +73,13 @@ CASES: list[tuple[str, str, str]] = [
         '%%%\ntitle = "T - S"\ndescription = """\n%%%\n"""\n%%%\n\n# Scope\n',
         '---\ntitle: "T"\nsubtitle: "S"\n---\n\n# Scope\n',
     ),
+    (
+        "a setext heading terminates the abstract drop "
+        "(mmark ends the abstract at the next heading of any style)",
+        ".# Abstract\n\nAbstract text.\n\nForeword\n========\n\n"
+        "Foreword body.\n\n# Scope\n",
+        "Foreword\n========\n\nForeword body.\n\n# Scope\n",
+    ),
 ]
 
 

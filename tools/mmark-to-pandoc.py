@@ -43,6 +43,7 @@ HEADING = re.compile(r"^\s{0,3}\.?#{1,6}(?:\s|$)")
 PART_MARKER = re.compile(r"^\{(?:frontmatter|mainmatter|backmatter)\}\s*$")
 ABSTRACT_START = re.compile(r"^\.#\s+Abstract\b")
 IAL_LINE = re.compile(r"^\{:.*\}\s*$")            # kramdown inline attribute list
+SETEXT_UNDERLINE = re.compile(r"^ {0,3}(=+|-+)\s*$")
 # A code-fence line (CommonMark rules, which mmark inherits): three or more
 # backticks/tildes indented at most 3 spaces — deeper indentation makes the
 # line indented-code *content*, not a fence. group(2) is the info string.
@@ -99,7 +100,7 @@ def _process_body(lines: list[str]) -> list[str]:
     fence = ""
     dropping_abstract = False
 
-    for line in lines:
+    for i, line in enumerate(lines):
         m = FENCE.match(line)
         if m:
             marker, info = m.group(1), m.group(2)
@@ -126,9 +127,20 @@ def _process_body(lines: list[str]) -> list[str]:
             continue
 
         # The abstract runs until the next heading (any level) or part marker;
-        # everything in between is dropped from the ISO Word output.
+        # everything in between is dropped from the ISO Word output. Headings
+        # may also be setext-style: text underlined with = or -. Approximation:
+        # we end the drop at the line right before the underline, whereas a
+        # multi-line setext paragraph would make mmark end it at the
+        # paragraph's first line — close enough for a filter, and it keeps
+        # whole sections from vanishing.
         if dropping_abstract:
-            if HEADING.match(line) or PART_MARKER.match(line):
+            next_line = lines[i + 1] if i + 1 < len(lines) else ""
+            starts_setext = (
+                line.strip() != ""
+                and not IAL_LINE.match(line)
+                and SETEXT_UNDERLINE.match(next_line)
+            )
+            if HEADING.match(line) or PART_MARKER.match(line) or starts_setext:
                 dropping_abstract = False  # fall through and handle this line
             else:
                 continue
