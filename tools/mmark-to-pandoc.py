@@ -166,7 +166,13 @@ def _process_body(lines: list[str]) -> list[str]:
 def convert(text: str) -> str:
     # An editor may save the file with a UTF-8 BOM; it must not hide the
     # front-matter delimiter (str.strip() does not remove U+FEFF).
-    lines = text.removeprefix("\ufeff").splitlines()
+    text = text.removeprefix("\ufeff")
+    # Split on real newlines only: str.splitlines() also breaks on U+2028,
+    # U+0085, form feed, etc., which markdown treats as ordinary characters \u2014
+    # rejoining with "\n" would turn them into hard line breaks.
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()  # a trailing newline terminates the last line
     front, start = _split_front_matter(lines)
     title, status = _title_and_status(front)
 

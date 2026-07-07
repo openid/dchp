@@ -92,6 +92,17 @@ CASES: list[tuple[str, str, str]] = [
         "# Scope\n\n- item\n  {: .keep-with-next}\n\nAfter text.\n",
         "# Scope\n\n- item\n\nAfter text.\n",
     ),
+    (
+        "unicode line boundaries (U+2028, form feed) pasted from Word/PDF "
+        "are ordinary characters to markdown, not line breaks",
+        "# Sco\u2028pe\n\nBody\fmore.\n",
+        "# Sco\u2028pe\n\nBody\fmore.\n",
+    ),
+    (
+        "CRLF line endings still split correctly",
+        "# Scope\r\n\r\n{mainmatter}\r\nBody.\r\n",
+        "# Scope\n\nBody.\n",
+    ),
 ]
 
 
