@@ -5,14 +5,16 @@ ipr = "none"
 workgroup = "Digital Credentials Harmonized Presentation"
 keyword = ["digital credentials", "mdoc", "sd-jwt vc", "presentation", "iso"]
 
-# seriesInfo is required by mmark; "independent" (non-IETF) silences the
-# "Empty 'stream'" warning. The final series metadata for this OpenID/ISO joint
-# document is still to be decided by the working group.
+# seriesInfo is placeholder IETF Internet-Draft framing (see name below). The
+# stream must match the document's submissionType (IETF by default), so it is set
+# to "IETF" to clear mmark's "Empty 'stream'" warning without an xml2rfc
+# stream/submissionType conflict. The final series metadata for this OpenID/ISO
+# joint document is still to be decided by the working group.
 [seriesInfo]
 name = "Internet-Draft"
 value = "digital-credentials-harmonized-presentation"
 status = "standard"
-stream = "independent"
+stream = "IETF"
 
 [[author]]
 initials = "TBD"

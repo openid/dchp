@@ -6,9 +6,8 @@
 #   make clean  - remove the build/ directory
 #
 # Source scripts live in tools/; everything generated goes to build/ (which is
-# git-ignored). `make html` needs Docker; `make docx` needs pandoc and python3
-# (3.11+, for the tomllib-based converter). Override the interpreter with e.g.
-# `make docx PYTHON=python3.13` on hosts whose default python3 is older.
+# git-ignored). `make html` needs Docker; `make docx` needs pandoc and a Python
+# with tomllib (3.11+, for the converter).
 
 SRCDIR   := draft
 DOC      := digital-credentials-harmonized-presentation
@@ -16,7 +15,14 @@ SRC      := $(SRCDIR)/$(DOC).md
 
 TOOLS    := tools
 BUILD    := build
-PYTHON   ?= python3
+
+# The mmark->pandoc converter needs tomllib (Python 3.11+). Auto-pick the first
+# available interpreter that has it, so `make docx` works even where the default
+# python3 is older; override explicitly with `make docx PYTHON=/path/to/python`.
+PYTHON   ?= $(shell for p in python3 python3.13 python3.12 python3.11; do \
+	command -v $$p >/dev/null 2>&1 && $$p -c 'import tomllib' >/dev/null 2>&1 \
+	  && { echo $$p; exit 0; }; \
+	done)
 
 # Pinned by digest so the HTML rendering is reproducible: an untagged/:latest
 # image could silently change the output between identical commits. Regenerate
@@ -41,12 +47,18 @@ html: $(SRC)
 	rm -f $(SRCDIR)/$(DOC)*.html $(SRCDIR)/$(DOC)*.xml $(SRCDIR)/$(DOC)*.txt
 	docker run --rm -v "$(CURDIR)/$(SRCDIR):/data" $(MD2RFC_IMAGE) $(DOC).md
 	mkdir -p $(BUILD)
-	cp $(SRCDIR)/$(DOC).html $(HTML_OUT)
+	# Cleaned above, so this glob now matches exactly the fresh output whatever
+	# markdown2rfc names it (it may add a draft-version suffix).
+	cp $(SRCDIR)/$(DOC)*.html $(HTML_OUT)
 	rm -f $(SRCDIR)/$(DOC)*.html $(SRCDIR)/$(DOC)*.xml $(SRCDIR)/$(DOC)*.txt
 	@echo "HTML Editor's Copy -> $(HTML_OUT)"
 
 ## ISO-styled Word document (pandoc) -> build/
 docx: $(SRC) $(REFDOC) $(TOOLS)/mmark-to-pandoc.py $(TOOLS)/iso-styles.lua
+	@test -n "$(strip $(PYTHON))" || { \
+	  echo "error: no Python with tomllib (3.11+) found;"; \
+	  echo "       install one or run: make docx PYTHON=/path/to/python3.11+"; \
+	  exit 1; }
 	mkdir -p $(BUILD)
 	$(PYTHON) $(TOOLS)/mmark-to-pandoc.py < $(SRC) > $(BUILD)/$(DOC).pandoc.md
 	pandoc $(BUILD)/$(DOC).pandoc.md \
