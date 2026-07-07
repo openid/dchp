@@ -62,7 +62,25 @@ CASES: list[tuple[str, str, str]] = [
         '```json\n{"a": 1}\n```\n\n{: .x}\n',
         '```json\n{"a": 1}\n```\n\n',
     ),
+    (
+        "a UTF-8 BOM does not hide the front-matter delimiter",
+        '﻿%%%\ntitle = "T - S"\n%%%\n\n# Scope\n',
+        '---\ntitle: "T"\nsubtitle: "S"\n---\n\n# Scope\n',
+    ),
+    (
+        "a %%% line inside a TOML multi-line string does not close the "
+        "front matter",
+        '%%%\ntitle = "T - S"\ndescription = """\n%%%\n"""\n%%%\n\n# Scope\n',
+        '---\ntitle: "T"\nsubtitle: "S"\n---\n\n# Scope\n',
+    ),
 ]
+
+
+def _convert_or_error(source: str) -> str:
+    try:
+        return mmark_to_pandoc.convert(source)
+    except Exception as e:  # an unexpected raise is a failure; show it as one
+        return f"<convert() raised {type(e).__name__}: {e}>\n"
 
 
 def _diff(name: str, expected: str, got: str) -> str:
@@ -89,12 +107,26 @@ def check_cases() -> list[str]:
     return [
         f"{name}:\n" + _diff(name, expected, got)
         for name, source, expected in CASES
-        if (got := mmark_to_pandoc.convert(source)) != expected
+        if (got := _convert_or_error(source)) != expected
     ]
 
 
+def check_unclosed_front_matter() -> list[str]:
+    """A ``%%%`` block that never closes must fail the build loudly — both
+    silently dropping the rest of the file and emitting the raw TOML (author
+    emails and all) as Word body text are wrong."""
+    source = '%%%\ntitle = "T"\n\n# Scope\n'
+    try:
+        mmark_to_pandoc.convert(source)
+    except ValueError as e:
+        if "front matter" in str(e):
+            return []
+        return [f"unclosed front matter: error message lacks context: {e}"]
+    return ["unclosed front matter: convert() did not raise"]
+
+
 def main() -> int:
-    failures = check_golden() + check_cases()
+    failures = check_golden() + check_cases() + check_unclosed_front_matter()
     for failure in failures:
         print(f"FAIL: {failure}", file=sys.stderr)
     if failures:

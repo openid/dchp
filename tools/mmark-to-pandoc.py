@@ -50,31 +50,41 @@ FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 SPECIAL_HEADING = re.compile(r"^(\s{0,3})\.(#{1,6})")
 
 
-def _split_front_matter(lines: list[str]) -> tuple[str, int]:
-    """Return (toml_text, body_start_index) for a leading ``%%% ... %%%`` block.
+def _split_front_matter(lines: list[str]) -> tuple[dict, int]:
+    """Return (metadata, body_start_index) for a leading ``%%% ... %%%`` block.
 
     If the source does not open with ``%%%`` there is no front matter: the whole
-    input is the body.
+    input is the body. The closing delimiter is found by parsing: a ``%%%`` line
+    *inside* a TOML multi-line string does not close the block (the truncated
+    text is not valid TOML there), matching how mmark reads the file. A block
+    that never closes, or whose content is not valid TOML, raises ValueError so
+    the build fails loudly instead of leaking the metadata (author emails and
+    all) into the Word document body.
     """
-    if lines and lines[0].strip() == "%%%":
-        for j in range(1, len(lines)):
-            if lines[j].strip() == "%%%":
-                return "\n".join(lines[1:j]), j + 1
-    return "", 0
+    if not lines or lines[0].strip() != "%%%":
+        return {}, 0
+    error: Exception | None = None
+    for j in range(1, len(lines)):
+        if lines[j].strip() != "%%%":
+            continue
+        try:
+            return tomllib.loads("\n".join(lines[1:j])), j + 1
+        except tomllib.TOMLDecodeError as e:
+            error = e
+    if error is not None:
+        raise ValueError(f"front matter is not valid TOML: {error}")
+    raise ValueError("front matter opened with '%%%' is never closed")
 
 
-def _title_and_status(toml_text: str) -> tuple[str | None, str | None]:
-    """Parse the TOML front matter into (title, status).
+def _title_and_status(meta: dict) -> tuple[str | None, str | None]:
+    """Extract (title, status) from the parsed front matter.
 
     The status (e.g. ``Editor's Copy``) is encoded after the *last* `` - `` in
     the single mmark ``title`` so the same title still drives the HTML draft.
     Splitting on the last separator keeps titles that themselves contain `` - ``
-    intact. ``tomllib`` handles basic, literal, and multi-line TOML strings, so
-    single-quoted titles and escaped quotes are parsed correctly.
+    intact.
     """
-    if not toml_text.strip():
-        return None, None
-    title = tomllib.loads(toml_text).get("title")
+    title = meta.get("title")
     if not isinstance(title, str) or not title.strip():
         return None, None
     main, sep, status = title.rpartition(" - ")
@@ -141,9 +151,11 @@ def _process_body(lines: list[str]) -> list[str]:
 
 
 def convert(text: str) -> str:
-    lines = text.splitlines()
-    toml_text, start = _split_front_matter(lines)
-    title, status = _title_and_status(toml_text)
+    # An editor may save the file with a UTF-8 BOM; it must not hide the
+    # front-matter delimiter (str.strip() does not remove U+FEFF).
+    lines = text.removeprefix("\ufeff").splitlines()
+    front, start = _split_front_matter(lines)
+    title, status = _title_and_status(front)
 
     body = "\n".join(_process_body(lines[start:])) + "\n"
 
@@ -159,4 +171,7 @@ def convert(text: str) -> str:
 
 
 if __name__ == "__main__":
-    sys.stdout.write(convert(sys.stdin.read()))
+    try:
+        sys.stdout.write(convert(sys.stdin.read()))
+    except ValueError as e:
+        raise SystemExit(f"error: {e}")
