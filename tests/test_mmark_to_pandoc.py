@@ -80,6 +80,18 @@ CASES: list[tuple[str, str, str]] = [
         "Foreword body.\n\n# Scope\n",
         "Foreword\n========\n\nForeword body.\n\n# Scope\n",
     ),
+    (
+        "an abstract heading indented 1-3 spaces (still a heading) is "
+        "dropped, not rewritten to a literal '# Abstract' clause",
+        " .# Abstract\n\nAbstract text.\n\n# Scope\n",
+        "# Scope\n",
+    ),
+    (
+        "an attribute list indented 1-3 spaces is dropped, not passed "
+        "through as literal text",
+        "# Scope\n\n- item\n  {: .keep-with-next}\n\nAfter text.\n",
+        "# Scope\n\n- item\n\nAfter text.\n",
+    ),
 ]
 
 

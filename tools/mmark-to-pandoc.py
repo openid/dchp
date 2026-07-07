@@ -41,8 +41,9 @@ except ModuleNotFoundError:  # Python < 3.11
 # An ATX heading, including the mmark special-heading ".#" form.
 HEADING = re.compile(r"^\s{0,3}\.?#{1,6}(?:\s|$)")
 PART_MARKER = re.compile(r"^\{(?:frontmatter|mainmatter|backmatter)\}\s*$")
-ABSTRACT_START = re.compile(r"^\.#\s+Abstract\b")
-IAL_LINE = re.compile(r"^\{:.*\}\s*$")            # kramdown inline attribute list
+# Like headings, these may be indented up to 3 spaces and still count.
+ABSTRACT_START = re.compile(r"^ {0,3}\.#\s+Abstract\b")
+IAL_LINE = re.compile(r"^ {0,3}\{:.*\}\s*$")      # kramdown inline attribute list
 SETEXT_UNDERLINE = re.compile(r"^ {0,3}(=+|-+)\s*$")
 # A code-fence line (CommonMark rules, which mmark inherits): three or more
 # backticks/tildes indented at most 3 spaces — deeper indentation makes the
