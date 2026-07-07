@@ -31,7 +31,7 @@ MD2RFC_IMAGE := danielfett/markdown2rfc@sha256:7b4412559d6ba5db45a14174a28da5b24
 
 # Reference document with the ISO styles/layout, committed to the repo (derived
 # once from the ISO template by tools/make-iso-reference.py; not regenerated per
-# build).
+# build). The ISO template itself is not committed — see that script's docstring.
 REFDOC   := template/iso-reference.docx
 
 HTML_OUT := $(BUILD)/$(DOC)-editors-copy.html

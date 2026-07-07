@@ -25,7 +25,15 @@ This script therefore:
 
 This script is NOT run on every build. Its output is committed as
 ``template/iso-reference.docx`` and used directly by ``make docx``; run this
-script by hand only to regenerate that file when the ISO template changes.
+script by hand to regenerate that file whenever the ISO template (or this
+script) changes. The ISO template itself is deliberately NOT committed — it is
+ISO-copyrighted and carries personal and classification metadata (docProps) —
+so obtain it from ISO/IEC JTC 1/SC 17 WG 10 and place it at
+``template/Word_template_for_ISO_standards.dotx`` (or pass its path) to
+regenerate. ``tests/test_iso_reference.py`` checks the committed file matches
+what this script produces whenever that template is present locally, and
+always checks that no ISO metadata/boilerplate ships in any committed Word
+file.
 Note: pandoc derives a single-section layout from the reference document, so the
 committed ``iso-reference.docx`` may still benefit from a one-time manual pass in
 Word to finalise section setup, page-numbering restarts, and margins.
@@ -36,10 +44,11 @@ through so the document keeps the ISO look-and-feel.
 Usage:
     python3 tools/make-iso-reference.py [INPUT.dotx] [OUTPUT.docx]
 
-Defaults: template/Word_template_for_ISO_standards.dotx -> build/iso-reference.docx
+Defaults: template/Word_template_for_ISO_standards.dotx -> template/iso-reference.docx
 """
 from __future__ import annotations
 
+import io
 import re
 import sys
 import zipfile
@@ -176,24 +185,31 @@ def transform(name: str, data: bytes) -> bytes:
     return data
 
 
-def main() -> int:
-    root = Path(__file__).resolve().parent.parent
-    src = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "template" / "Word_template_for_ISO_standards.dotx"
-    dst = Path(sys.argv[2]) if len(sys.argv) > 2 else root / "build" / "iso-reference.docx"
-
-    if not src.is_file():
-        print(f"error: template not found: {src}", file=sys.stderr)
-        return 1
-
-    dst.parent.mkdir(parents=True, exist_ok=True)
+def build(src: Path) -> bytes:
+    """Return the transformed reference document as .docx bytes."""
+    buf = io.BytesIO()
     with zipfile.ZipFile(src) as zin, zipfile.ZipFile(
-        dst, "w", zipfile.ZIP_DEFLATED
+        buf, "w", zipfile.ZIP_DEFLATED
     ) as zout:
         for item in zin.infolist():
             if _is_dropped(item.filename):
                 continue
             data = transform(item.filename, zin.read(item.filename))
             zout.writestr(item, data)
+    return buf.getvalue()
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parent.parent
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "template" / "Word_template_for_ISO_standards.dotx"
+    dst = Path(sys.argv[2]) if len(sys.argv) > 2 else root / "template" / "iso-reference.docx"
+
+    if not src.is_file():
+        print(f"error: template not found: {src}", file=sys.stderr)
+        return 1
+
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes(build(src))
 
     try:
         shown = dst.relative_to(root)
