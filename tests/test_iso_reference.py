@@ -8,8 +8,7 @@ ISO branding, copyright/IPR boilerplate, or document metadata from the ISO
 template travels into the public repo. A regression here is silent — the
 files are binary and nobody re-opens them on review — so these tests pin
 those guarantees against *every* committed .docx/.dotx (the ISO template
-itself is deliberately not committed: it is ISO-copyrighted and carries
-personal and classification metadata).
+itself is deliberately not committed — see tools/make-iso-reference.py).
 
 Run:  python3 tests/test_iso_reference.py
 """
@@ -80,13 +79,17 @@ def committed_word_files() -> list[pathlib.Path]:
 def check_no_iso_boilerplate(z: zipfile.ZipFile) -> list[str]:
     """No ISO copyright/IPR or title-page text may remain in any XML part
     (body, headers, footers, notes); footers carry the draft label instead."""
-    return [
-        f"{name}: contains {marker!r}"
-        for name in z.namelist()
-        if name.endswith(".xml")
-        for marker in ISO_BOILERPLATE_MARKERS
-        if marker in z.read(name).decode("utf-8")
-    ]
+    problems = []
+    for name in z.namelist():
+        if not name.endswith(".xml"):
+            continue
+        text = z.read(name).decode("utf-8")
+        problems += [
+            f"{name}: contains {marker!r}"
+            for marker in ISO_BOILERPLATE_MARKERS
+            if marker in text
+        ]
+    return problems
 
 
 def check_no_trash_entries(z: zipfile.ZipFile) -> list[str]:
@@ -114,9 +117,8 @@ def check_in_sync_with_generator(z: zipfile.ZipFile) -> list[str]:
     silently ship the stale styles. (Parts are compared decompressed, so
     zlib differences between environments cannot cause false failures.)
 
-    The ISO template is not committed (ISO-copyrighted; carries personal and
-    classification metadata), so this check runs only where an editor has
-    placed it locally — regenerate and you get the guard; CI skips it.
+    The ISO template is not committed (see tools/make-iso-reference.py), so
+    this check runs only where an editor has placed it locally; CI skips it.
     """
     if not TEMPLATE.is_file():
         print(f"SKIP: generator sync check ({TEMPLATE.name} not present)")
@@ -156,14 +158,12 @@ def main() -> int:
     if REFDOC not in files:
         problems.append(f"{REFDOC.relative_to(ROOT)}: not committed")
     for path in files:
+        checks = FILE_CHECKS + (REFDOC_CHECKS if path == REFDOC else [])
         with zipfile.ZipFile(path) as z:
-            for check in FILE_CHECKS:
+            for check in checks:
                 problems += [
                     f"{path.relative_to(ROOT)}: {p}" for p in check(z)
                 ]
-    with zipfile.ZipFile(REFDOC) as z:
-        for check in REFDOC_CHECKS:
-            problems += [f"{REFDOC.relative_to(ROOT)}: {p}" for p in check(z)]
     for p in problems:
         print(f"FAIL: {p}", file=sys.stderr)
     if problems:

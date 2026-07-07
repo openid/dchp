@@ -3,6 +3,7 @@
 #   make html   - render the HTML Editor's Copy with markdown2rfc (Docker)
 #   make docx   - render the ISO-styled Word document with pandoc
 #   make all    - build both
+#   make test   - run the test suite
 #   make clean  - remove the build/ directory
 #
 # Source scripts live in tools/; everything generated goes to build/ (which is
@@ -36,9 +37,16 @@ REFDOC   := template/iso-reference.docx
 
 HTML_OUT := $(BUILD)/$(DOC)-editors-copy.html
 
-.PHONY: all html docx clean
+.PHONY: all html docx test clean need-python
 
 all: html docx
+
+# The converter and the tests need $(PYTHON); fail with guidance if none found.
+need-python:
+	@test -n "$(strip $(PYTHON))" || { \
+	  echo "error: no Python with tomllib (3.11+) found;"; \
+	  echo "       install one or run: make <target> PYTHON=/path/to/python3.11+"; \
+	  exit 1; }
 
 ## HTML Editor's Copy (markdown2rfc / mmark) -> build/
 html: $(SRC)
@@ -54,11 +62,7 @@ html: $(SRC)
 	@echo "HTML Editor's Copy -> $(HTML_OUT)"
 
 ## ISO-styled Word document (pandoc) -> build/
-docx: $(SRC) $(REFDOC) $(TOOLS)/mmark-to-pandoc.py $(TOOLS)/iso-styles.lua
-	@test -n "$(strip $(PYTHON))" || { \
-	  echo "error: no Python with tomllib (3.11+) found;"; \
-	  echo "       install one or run: make docx PYTHON=/path/to/python3.11+"; \
-	  exit 1; }
+docx: need-python $(SRC) $(REFDOC) $(TOOLS)/mmark-to-pandoc.py $(TOOLS)/iso-styles.lua
 	mkdir -p $(BUILD)
 	$(PYTHON) $(TOOLS)/mmark-to-pandoc.py < $(SRC) > $(BUILD)/$(DOC).pandoc.md
 	pandoc $(BUILD)/$(DOC).pandoc.md \
@@ -67,6 +71,10 @@ docx: $(SRC) $(REFDOC) $(TOOLS)/mmark-to-pandoc.py $(TOOLS)/iso-styles.lua
 		-o $(BUILD)/$(DOC).docx
 	rm -f $(BUILD)/$(DOC).pandoc.md
 	@echo "ISO Word document -> $(BUILD)/$(DOC).docx"
+
+## Test suite (every tests/test_*.py, so new tests run without editing this)
+test: need-python
+	@for t in tests/test_*.py; do $(PYTHON) $$t || exit 1; done
 
 clean:
 	rm -rf $(BUILD)

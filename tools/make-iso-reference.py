@@ -98,20 +98,13 @@ CT_DOCUMENT = (
 # edited the ISO template; it is not part of the OPC package.
 DROP_PREFIXES = ("word/media/", "word/embeddings/", "customXml/", "docProps/", "[trash]/")
 
-
-def _is_dropped(name: str) -> bool:
-    return name.startswith(DROP_PREFIXES)
-
-
 # Substrings that identify a relationship/content-type entry pointing at a
 # dropped part, so we can keep [Content_Types].xml and the *.rels files
-# internally consistent after the drop.
-_DANGLING = (
-    "media/",
-    "embeddings/",
-    "customXml/",
-    "docProps/",
-)
+# internally consistent after the drop. Derived from DROP_PREFIXES because
+# the two must move in lockstep; relationship targets are relative to the
+# referencing part, so "word/media/" appears as "media/" ("[trash]/" never
+# appears in a relationship target, matching it is harmless).
+_DANGLING = tuple(p.removeprefix("word/") for p in DROP_PREFIXES)
 _XML_ELEMENT = re.compile(r"<(Relationship|Override|Default)\b[^>]*/>")
 
 
@@ -192,7 +185,7 @@ def build(src: Path) -> bytes:
         buf, "w", zipfile.ZIP_DEFLATED
     ) as zout:
         for item in zin.infolist():
-            if _is_dropped(item.filename):
+            if item.filename.startswith(DROP_PREFIXES):
                 continue
             data = transform(item.filename, zin.read(item.filename))
             zout.writestr(item, data)

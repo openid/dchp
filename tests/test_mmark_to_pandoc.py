@@ -93,6 +93,12 @@ CASES: list[tuple[str, str, str]] = [
         "# Scope\n\n- item\n\nAfter text.\n",
     ),
     (
+        "a part marker indented 1-3 spaces is dropped, not passed through "
+        "as literal text",
+        "# Scope\n\n  {mainmatter}\n\nAfter text.\n",
+        "# Scope\n\n\nAfter text.\n",
+    ),
+    (
         "unicode line boundaries (U+2028, form feed) pasted from Word/PDF "
         "are ordinary characters to markdown, not line breaks",
         "# Sco\u2028pe\n\nBody\fmore.\n",
@@ -113,12 +119,12 @@ def _convert_or_error(source: str) -> str:
         return f"<convert() raised {type(e).__name__}: {e}>\n"
 
 
-def _diff(name: str, expected: str, got: str) -> str:
+def _diff(expected: str, got: str) -> str:
     return "".join(
         difflib.unified_diff(
             expected.splitlines(keepends=True),
             got.splitlines(keepends=True),
-            fromfile=f"expected [{name}]",
+            fromfile="expected",
             tofile="got",
         )
     )
@@ -129,13 +135,13 @@ def check_golden() -> list[str]:
     expected = (FIXTURES / "sample.expected.md").read_text()
     got = mmark_to_pandoc.convert(source)
     if got != expected:
-        return ["golden output mismatch:\n" + _diff("sample.md", expected, got)]
+        return ["golden output mismatch:\n" + _diff(expected, got)]
     return []
 
 
 def check_cases() -> list[str]:
     return [
-        f"{name}:\n" + _diff(name, expected, got)
+        f"{name}:\n" + _diff(expected, got)
         for name, source, expected in CASES
         if (got := _convert_or_error(source)) != expected
     ]
