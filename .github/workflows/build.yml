@@ -25,22 +25,36 @@ env:
 
 jobs:
   build:
-    name: Build HTML Working Group Draft and ISO Word document
+    name: Build HTML Editor's Copy and ISO Word document
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # HTML Working Group Draft (markdown2rfc / mmark), same tooling as other
-      # OpenID DCP specifications; published to GitHub Pages below.
-      - name: Render HTML Working Group Draft
+      # HTML Editor's Copy (markdown2rfc / mmark), same tooling as other OpenID
+      # DCP specifications; published to GitHub Pages below.
+      - name: Render HTML Editor's Copy
         run: make html
+
+      # Pin the interpreter: the mmark->pandoc converter needs tomllib (3.11+).
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Test the mmark->pandoc converter
+        run: python3 tests/test_mmark_to_pandoc.py
 
       # ISO-styled Word document (pandoc), for sharing the draft with ISO.
       # Delivered as a workflow artifact only; not published to the site.
+      # Pinned .deb release so the .docx rendering is reproducible (and faster
+      # than `apt-get update && install`, which pulls whatever the runner has).
       - name: Install pandoc
+        env:
+          PANDOC_VERSION: '3.8.3'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pandoc
+          curl -fsSL -o /tmp/pandoc.deb \
+            "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
+          sudo dpkg -i /tmp/pandoc.deb
 
       - name: Render ISO Word document
         run: make docx
@@ -49,8 +63,8 @@ jobs:
         run: |
           mkdir -p _site
           cp build/*.html _site/
-          # Redirect the bare Pages URL to the Working Group Draft (avoids a root 404).
-          printf '<!doctype html>\n<meta http-equiv="refresh" content="0; url=%s-wg-draft.html">\n' \
+          # Redirect the bare Pages URL to the Editor's Copy (avoids a root 404).
+          printf '<!doctype html>\n<meta http-equiv="refresh" content="0; url=%s-editors-copy.html">\n' \
             "${{ env.DOC }}" > _site/index.html
 
       - name: Upload site artifact
@@ -66,10 +80,15 @@ jobs:
           path: build/${{ env.DOC }}.docx
 
   publish-to-pages:
-    name: Publish Working Group Draft to GitHub Pages
+    name: Publish Editor's Copy to GitHub Pages
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    # Serialise Pages deployments so two quick merges to main can't race (one
+    # failing with "a deployment is already in progress", or publishing stale).
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write

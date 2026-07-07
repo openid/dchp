@@ -1,8 +1,9 @@
 --[[
   ISO front/back-matter formatting for the pandoc -> Word build.
 
-  1. Title block. mmark-to-pandoc.py carries the mmark title across as pandoc
-     metadata; here we render it as a centred title (plus a status subtitle) at
+  1. Title block. mmark-to-pandoc.py carries the title across as two pandoc
+     metadata fields (`title` and an optional `subtitle` holding the document
+     status); here we render them as a centred title plus a status subtitle at
      the very top. Without this, pandoc + the ISO reference document produce a
      Word document with no title at all.
 
@@ -64,13 +65,12 @@ end
 function Pandoc(doc)
   local meta_title = doc.meta.title
   if meta_title then
-    local full = pandoc.utils.stringify(meta_title)
-    doc.meta.title = nil -- suppress pandoc's own (unstyled) title block
-    -- Split "Title - Status" into title + subtitle on the first " - ".
-    local main, sub = full:match("^(.-)%s+%-%s+(.+)$")
-    if not main then main = full end
+    local main = pandoc.utils.stringify(meta_title)
+    local sub = doc.meta.subtitle and pandoc.utils.stringify(doc.meta.subtitle) or nil
+    doc.meta.title = nil    -- suppress pandoc's own (unstyled) title block
+    doc.meta.subtitle = nil
     local head = { centred_block(main, "36", true, "120") } -- 18 pt bold
-    if sub then
+    if sub and sub ~= "" then
       head[#head + 1] = centred_block(sub, "26", false, "360") -- 13 pt
     end
     for _, b in ipairs(doc.blocks) do

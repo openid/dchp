@@ -1,14 +1,18 @@
 %%%
-title = "Digital Credentials Harmonized Presentation - Working Group Draft"
+title = "Digital Credentials Harmonized Presentation - Editor's Copy"
 abbrev = "dchp"
 ipr = "none"
 workgroup = "Digital Credentials Harmonized Presentation"
 keyword = ["digital credentials", "mdoc", "sd-jwt vc", "presentation", "iso"]
 
+# seriesInfo is required by mmark; "independent" (non-IETF) silences the
+# "Empty 'stream'" warning. The final series metadata for this OpenID/ISO joint
+# document is still to be decided by the working group.
 [seriesInfo]
 name = "Internet-Draft"
 value = "digital-credentials-harmonized-presentation"
 status = "standard"
+stream = "independent"
 
 [[author]]
 initials = "TBD"
@@ -27,19 +31,17 @@ credentials, bringing together the credential presentation approaches of
 ISO/IEC 18013-5 and OpenID for Verifiable Presentations across multiple
 credential formats, including ISO mdoc and IETF SD-JWT VC.
 
-{mainmatter}
-
-# Foreword
+.# Foreword
 
 This specification has been jointly developed by members of ISO/IEC JTC 1/SC 17
 WG 10 and members of the OpenID Foundation Digital Credentials Protocols (DCP)
 Working Group, under the OpenID Foundation's Digital Credentials Harmonized
 Presentation (DCHP) Working Group.
 
-This is a Working Group Draft. It is a work in progress and is subject to change
+This is an Editor's Copy. It is a work in progress and is subject to change
 at any time.
 
-# Introduction
+.# Introduction
 
 ISO/IEC 18013-5 (Device Request / Device Response) and OpenID for Verifiable
 Presentations (Authorization Request / Authorization Response) take different
@@ -51,6 +53,8 @@ formats, including ISO mdoc and IETF SD-JWT VC.
 The objective is to enable interoperability among the parties involved in the
 presentation of digital credentials while allowing existing deployments to
 continue to operate.
+
+{mainmatter}
 
 # Scope
 

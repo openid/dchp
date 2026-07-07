@@ -24,10 +24,11 @@ for more information.
 
 ## Specifications
 
-The current Working Group Draft is built automatically from [draft/](draft/) on
-every change to the `main` branch:
+The Editor's Copy is built automatically from [draft/](draft/) on every change
+to the `main` branch. It reflects the latest in-progress edits and is not an
+approved Working Group Draft:
 
-- [Digital Credentials Harmonized Presentation — Working Group Draft](https://openid.github.io/dchp/digital-credentials-harmonized-presentation-wg-draft.html)
+- [Digital Credentials Harmonized Presentation — Editor's Copy](https://openid.github.io/dchp/digital-credentials-harmonized-presentation-editors-copy.html)
 
 ## Contributing
 

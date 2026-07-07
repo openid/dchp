@@ -13,11 +13,20 @@ This script therefore:
      (.docx) so the result is a normal Word document;
   2. neutralises the ISO copyright notice and document-number placeholders that
      live in the running headers/footers; and
-  3. drops the ISO logo images and the ISO document metadata (docProps and
-     customXml parts) so no ISO branding or classification travels with the
-     exported file; and
+  3. drops the ISO logo images, the embedded OLE object, and the ISO document
+     metadata (docProps and customXml parts) — and strips the drawing/object
+     elements in word/document.xml that referenced them — so no ISO branding or
+     classification travels with the exported file and it opens clean (no
+     broken-image placeholders) when viewed standalone; and
   4. un-hides the styles (removes <w:semiHidden/>) so every docx viewer applies
      the ISO heading styles instead of falling back to plain body text.
+
+This script is NOT run on every build. Its output is committed as
+``template/iso-reference.docx`` and used directly by ``make docx``; run this
+script by hand only to regenerate that file when the ISO template changes.
+Note: pandoc derives a single-section layout from the reference document, so the
+committed ``iso-reference.docx`` may still benefit from a one-time manual pass in
+Word to finalise section setup, page-numbering restarts, and margins.
 
 Everything else (styles, numbering, theme, fonts, headers/footers) is copied
 through so the document keeps the ISO look-and-feel.
@@ -42,7 +51,7 @@ from pathlib import Path
 # neutral, non-IPR marker, leaving page-number fields (separate runs) intact.
 # Matching by content (not exact whitespace) keeps this robust to the template's
 # non-breaking spaces and dash characters.
-DRAFT_LABEL = "Working Group Draft"
+DRAFT_LABEL = "Editor's Copy"
 _RUN_TEXT = re.compile(r"(<w:t\b[^>]*>)([^<]*)(</w:t>)", re.S)
 
 
@@ -66,12 +75,13 @@ CT_DOCUMENT = (
     "wordprocessingml.document.main+xml"
 )
 
-# --- Parts to drop entirely (ISO logos and ISO document metadata) ------------
-# The template's only images are the ISO logo/branding, referenced solely by the
-# title page (which pandoc discards). customXml holds ISO metadata bindings and
-# docProps/{app,custom}.xml hold ISO company/classification metadata. None are
-# needed to style the document, so we drop them.
-DROP_PREFIXES = ("word/media/", "customXml/")
+# --- Parts to drop entirely (ISO logos, OLE object, ISO document metadata) ---
+# The template's only images (word/media) are the ISO logo/branding and the
+# template's embedded OLE object (word/embeddings/oleObject1.bin), all referenced
+# solely by the title page (which pandoc discards). customXml holds ISO metadata
+# bindings and docProps/{app,custom}.xml hold ISO company/classification
+# metadata. None are needed to style the document, so we drop them.
+DROP_PREFIXES = ("word/media/", "word/embeddings/", "customXml/")
 DROP_EXACT = {"docProps/app.xml", "docProps/custom.xml"}
 
 
@@ -82,7 +92,13 @@ def _is_dropped(name: str) -> bool:
 # Substrings that identify a relationship/content-type entry pointing at a
 # dropped part, so we can keep [Content_Types].xml and the *.rels files
 # internally consistent after the drop.
-_DANGLING = ("media/", "customXml/", "docProps/app.xml", "docProps/custom.xml")
+_DANGLING = (
+    "media/",
+    "embeddings/",
+    "customXml/",
+    "docProps/app.xml",
+    "docProps/custom.xml",
+)
 _XML_ELEMENT = re.compile(r"<(Relationship|Override|Default)\b[^>]*/>")
 
 
@@ -94,6 +110,23 @@ def _strip_dangling(xml: str) -> str:
         return el
 
     return _XML_ELEMENT.sub(repl, xml)
+
+
+# The template's document body (the ISO title page) embeds the logo images via
+# <w:drawing> and the OLE object via <w:object>. Pandoc discards the reference
+# document's body, so these never reach the generated .docx — but they leave
+# dangling image/OLE references (rId25/26/27) behind in the reference file
+# itself, which show as broken-image placeholders when it is opened standalone.
+# Their target parts are dropped above; strip the referencing elements too so
+# the reference document is internally consistent. Only inline content is
+# removed; the section properties (<w:sectPr>) that pandoc reads are untouched.
+_DRAWING_OR_OBJECT = re.compile(
+    r"<w:(drawing|object|pict)\b.*?</w:\1>", re.S
+)
+
+
+def _strip_media_elements(xml: str) -> str:
+    return _DRAWING_OR_OBJECT.sub("", xml)
 
 
 # The ISO template hides most of its styles from the Word gallery
@@ -116,6 +149,8 @@ def transform(name: str, data: bytes) -> bytes:
         return _strip_dangling(text).encode("utf-8")
     if name.endswith(".rels"):
         return _strip_dangling(data.decode("utf-8")).encode("utf-8")
+    if name == "word/document.xml":
+        return _strip_media_elements(data.decode("utf-8")).encode("utf-8")
     if name == "word/styles.xml":
         return _activate_styles(data.decode("utf-8")).encode("utf-8")
     if name.startswith(("word/header", "word/footer")) and name.endswith(".xml"):

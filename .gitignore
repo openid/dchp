@@ -25,6 +25,10 @@ Gemfile.lock
 package-lock.json
 /lib/
 
+# Python bytecode caches (tools/ and tests/)
+__pycache__/
+*.py[cod]
+
 # Editor / OS files
 *~
 *.swp
