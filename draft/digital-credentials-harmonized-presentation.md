@@ -5,16 +5,18 @@ ipr = "none"
 workgroup = "Digital Credentials Harmonized Presentation"
 keyword = ["digital credentials", "mdoc", "sd-jwt vc", "presentation", "iso"]
 
-# seriesInfo is placeholder IETF Internet-Draft framing (see name below). The
-# stream must match the document's submissionType (IETF by default), so it is set
-# to "IETF" to clear mmark's "Empty 'stream'" warning without an xml2rfc
-# stream/submissionType conflict. The final series metadata for this OpenID/ISO
-# joint document is still to be decided by the working group.
+# NOTE: this [seriesInfo] block is IETF Internet-Draft scaffolding needed by the
+# markdown2rfc (mmark/xml2rfc) HTML toolchain; it is NOT a claim that this is an
+# IETF document. mmark 2.2.31 hard-codes <rfc submissionType="IETF"> and does not
+# propagate the stream, so a non-IETF stream (e.g. "independent") makes xml2rfc
+# fail with a stream/submissionType mismatch. We therefore leave "stream" unset
+# rather than assert a false "IETF" stream; mmark only warns ("Empty 'stream'")
+# and the HTML still builds. The real publication reference for this OpenID/ISO
+# joint document is a WG/SDO decision -- see issue 13.
 [seriesInfo]
 name = "Internet-Draft"
 value = "digital-credentials-harmonized-presentation"
 status = "standard"
-stream = "IETF"
 
 [[author]]
 initials = "TBD"
