@@ -43,8 +43,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Test the mmark->pandoc converter
-        run: python3 tests/test_mmark_to_pandoc.py
+      - name: Run tests
+        run: |
+          python3 tests/test_mmark_to_pandoc.py
+          python3 tests/test_iso_reference.py
 
       # ISO-styled Word document (pandoc), for sharing the draft with ISO.
       # Delivered as a workflow artifact only; not published to the site.

@@ -11,14 +11,16 @@ boilerplate or branding: the document is not an ISO deliverable yet.
 This script therefore:
   1. flips the main-document content type from *template* (.dotx) to *document*
      (.docx) so the result is a normal Word document;
-  2. neutralises the ISO copyright notice and document-number placeholders that
-     live in the running headers/footers; and
-  3. drops the ISO logo images, the embedded OLE object, and the ISO document
-     metadata (docProps and customXml parts) — and strips the drawing/object
-     elements in word/document.xml that referenced them — so no ISO branding or
-     classification travels with the exported file and it opens clean (no
-     broken-image placeholders) when viewed standalone; and
-  4. un-hides the styles (removes <w:semiHidden/>) so every docx viewer applies
+  2. replaces the document body — the ISO title page with its document-number
+     placeholders, WD/CD review warning, and the full ISO copyright/IPR
+     notice — with a single empty paragraph, keeping only the body-level
+     <w:sectPr> (page geometry, running footers) that pandoc reads;
+  3. neutralises the ISO copyright notice and document-number placeholders that
+     live in the running headers/footers;
+  4. drops the ISO logo images, the embedded OLE object, and the ISO document
+     metadata (docProps and customXml parts) so no ISO branding, classification,
+     or template-author identity travels with the exported file; and
+  5. un-hides the styles (removes <w:semiHidden/>) so every docx viewer applies
      the ISO heading styles instead of falling back to plain body text.
 
 This script is NOT run on every build. Its output is committed as
@@ -79,14 +81,17 @@ CT_DOCUMENT = (
 # The template's only images (word/media) are the ISO logo/branding and the
 # template's embedded OLE object (word/embeddings/oleObject1.bin), all referenced
 # solely by the title page (which pandoc discards). customXml holds ISO metadata
-# bindings and docProps/{app,custom}.xml hold ISO company/classification
-# metadata. None are needed to style the document, so we drop them.
-DROP_PREFIXES = ("word/media/", "word/embeddings/", "customXml/")
-DROP_EXACT = {"docProps/app.xml", "docProps/custom.xml"}
+# bindings; docProps holds the ISO company/classification metadata (app.xml,
+# custom.xml) and the template author's personal metadata (core.xml carries
+# dc:creator / cp:lastModifiedBy). None are needed to style the document, so we
+# drop them all — Word and pandoc are fine without document properties.
+# [trash]/ is zip-housekeeping junk left in the .dotx by whatever tool last
+# edited the ISO template; it is not part of the OPC package.
+DROP_PREFIXES = ("word/media/", "word/embeddings/", "customXml/", "docProps/", "[trash]/")
 
 
 def _is_dropped(name: str) -> bool:
-    return name in DROP_EXACT or name.startswith(DROP_PREFIXES)
+    return name.startswith(DROP_PREFIXES)
 
 
 # Substrings that identify a relationship/content-type entry pointing at a
@@ -96,8 +101,7 @@ _DANGLING = (
     "media/",
     "embeddings/",
     "customXml/",
-    "docProps/app.xml",
-    "docProps/custom.xml",
+    "docProps/",
 )
 _XML_ELEMENT = re.compile(r"<(Relationship|Override|Default)\b[^>]*/>")
 
@@ -112,14 +116,27 @@ def _strip_dangling(xml: str) -> str:
     return _XML_ELEMENT.sub(repl, xml)
 
 
-# The template's document body (the ISO title page) embeds the logo images via
-# <w:drawing> and the OLE object via <w:object>. Pandoc discards the reference
-# document's body, so these never reach the generated .docx — but they leave
-# dangling image/OLE references (rId25/26/27) behind in the reference file
-# itself, which show as broken-image placeholders when it is opened standalone.
-# Their target parts are dropped above; strip the referencing elements too so
-# the reference document is internally consistent. Only inline content is
-# removed; the section properties (<w:sectPr>) that pandoc reads are untouched.
+# The template's document body is the ISO title page: document-number
+# placeholders, the WD/CD review warning, the full ISO copyright/IPR notice,
+# and the logo drawings / OLE object that referenced the dropped media parts.
+# Pandoc ignores the reference document's body — it reads only the styles and
+# the final body-level <w:sectPr> — so replace the whole body with one empty
+# paragraph plus that <w:sectPr>. Nothing ISO-owned survives in the committed
+# file when it is opened standalone, and no dangling image references are left
+# behind. (Both .* are greedy, so the match keeps the *last* sectPr: the
+# body-level one.)
+_BODY = re.compile(r"(<w:body>).*(<w:sectPr\b.*</w:sectPr>)\s*(</w:body>)", re.S)
+
+
+def _empty_body(xml: str) -> str:
+    return _BODY.sub(r"\1<w:p/>\2\3", xml)
+
+
+# Belt-and-braces for the header/footer parts we keep: _strip_dangling removes
+# media/OLE relationships from *all* .rels files, so also strip any
+# <w:drawing>/<w:object>/<w:pict> elements there (none in the current template)
+# rather than leave dangling references that render as broken-image
+# placeholders.
 _DRAWING_OR_OBJECT = re.compile(
     r"<w:(drawing|object|pict)\b.*?</w:\1>", re.S
 )
@@ -150,11 +167,12 @@ def transform(name: str, data: bytes) -> bytes:
     if name.endswith(".rels"):
         return _strip_dangling(data.decode("utf-8")).encode("utf-8")
     if name == "word/document.xml":
-        return _strip_media_elements(data.decode("utf-8")).encode("utf-8")
+        return _empty_body(data.decode("utf-8")).encode("utf-8")
     if name == "word/styles.xml":
         return _activate_styles(data.decode("utf-8")).encode("utf-8")
     if name.startswith(("word/header", "word/footer")) and name.endswith(".xml"):
-        return _neutralise_runs(data.decode("utf-8")).encode("utf-8")
+        text = _strip_media_elements(data.decode("utf-8"))
+        return _neutralise_runs(text).encode("utf-8")
     return data
 
 
