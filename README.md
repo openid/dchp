@@ -24,9 +24,11 @@ for more information.
 
 ## Specifications
 
-The working group is at an early stage and no drafts have been published yet.
-Links to the Editor's Copy and Working Group Drafts will be added here as they
-become available.
+The Editor's Copy is built automatically from [draft/](draft/) on every change
+to the `main` branch. It reflects the latest in-progress edits and is not an
+approved Working Group Draft:
+
+- [Digital Credentials Harmonized Presentation — Editor's Copy](https://openid.github.io/dchp/digital-credentials-harmonized-presentation-editors-copy.html)
 
 ## Contributing
 

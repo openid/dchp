@@ -6,10 +6,15 @@
 *.redxml
 *.upload
 /*-[0-9][0-9].xml
+/draft/*.xml
 /.refcache
 /versioned/
 archive.json
 report.xml
+
+# Build outputs — HTML draft, ISO Word document and all intermediates.
+# Source scripts live in tools/; the ISO template lives in tools/template/.
+/build/
 
 # Build tooling
 /.gems/
@@ -19,6 +24,10 @@ report.xml
 Gemfile.lock
 package-lock.json
 /lib/
+
+# Python bytecode caches (tools/ and tools/tests/)
+__pycache__/
+*.py[cod]
 
 # Editor / OS files
 *~
