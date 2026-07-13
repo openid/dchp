@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Hygiene tests for committed Word (WordprocessingML) files.
 
-``template/iso-reference.docx`` is derived from the ISO Word template by
+``tools/template/iso-reference.docx`` is derived from the ISO Word template by
 ``tools/make-iso-reference.py`` and committed to the repo (the build uses it
 directly; the generator is not part of the build). The tool promises that no
 ISO branding, copyright/IPR boilerplate, or document metadata from the ISO
@@ -10,7 +10,7 @@ files are binary and nobody re-opens them on review — so these tests pin
 those guarantees against *every* committed .docx/.dotx (the ISO template
 itself is deliberately not committed — see tools/make-iso-reference.py).
 
-Run:  python3 tests/test_iso_reference.py
+Run:  python3 tools/tests/test_iso_reference.py
 """
 from __future__ import annotations
 
@@ -21,9 +21,9 @@ import subprocess
 import sys
 import zipfile
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-REFDOC = ROOT / "template" / "iso-reference.docx"
-TEMPLATE = ROOT / "template" / "Word_template_for_ISO_standards.dotx"
+ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+REFDOC = ROOT / "tools" / "template" / "iso-reference.docx"
+TEMPLATE = ROOT / "tools" / "template" / "Word_template_for_ISO_standards.dotx"
 
 # The generator's filename has a hyphen, so load it by path rather than import.
 _spec = importlib.util.spec_from_file_location(

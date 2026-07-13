@@ -33,7 +33,7 @@ MD2RFC_IMAGE := danielfett/markdown2rfc@sha256:7b4412559d6ba5db45a14174a28da5b24
 # Reference document with the ISO styles/layout, committed to the repo (derived
 # once from the ISO template by tools/make-iso-reference.py; not regenerated per
 # build). The ISO template itself is not committed — see that script's docstring.
-REFDOC   := template/iso-reference.docx
+REFDOC   := $(TOOLS)/template/iso-reference.docx
 
 HTML_OUT := $(BUILD)/$(DOC)-editors-copy.html
 
@@ -72,9 +72,9 @@ docx: need-python $(SRC) $(REFDOC) $(TOOLS)/mmark-to-pandoc.py $(TOOLS)/iso-styl
 	rm -f $(BUILD)/$(DOC).pandoc.md
 	@echo "ISO Word document -> $(BUILD)/$(DOC).docx"
 
-## Test suite (every tests/test_*.py, so new tests run without editing this)
+## Test suite (every tools/tests/test_*.py, so new tests run without editing this)
 test: need-python
-	@for t in tests/test_*.py; do $(PYTHON) $$t || exit 1; done
+	@for t in $(TOOLS)/tests/test_*.py; do $(PYTHON) $$t || exit 1; done
 
 clean:
 	rm -rf $(BUILD)

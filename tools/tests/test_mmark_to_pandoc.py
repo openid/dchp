@@ -13,7 +13,7 @@ exercises every transformation:
   * a fenced code block whose contents (``%%%``, ``{mainmatter}``, ``.#``,
     ``{: ...}``) must pass through verbatim.
 
-Run:  python3 tests/test_mmark_to_pandoc.py   (requires Python 3.11+ / tomllib)
+Run:  python3 tools/tests/test_mmark_to_pandoc.py   (requires Python 3.11+ / tomllib)
 """
 from __future__ import annotations
 
@@ -22,12 +22,12 @@ import importlib.util
 import pathlib
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-FIXTURES = ROOT / "tests" / "fixtures"
+HERE = pathlib.Path(__file__).resolve().parent
+FIXTURES = HERE / "fixtures"
 
 # The converter's filename has a hyphen, so load it by path rather than import.
 _spec = importlib.util.spec_from_file_location(
-    "mmark_to_pandoc", ROOT / "tools" / "mmark-to-pandoc.py"
+    "mmark_to_pandoc", HERE.parent / "mmark-to-pandoc.py"
 )
 assert _spec and _spec.loader
 mmark_to_pandoc = importlib.util.module_from_spec(_spec)

@@ -24,13 +24,13 @@ This script therefore:
      the ISO heading styles instead of falling back to plain body text.
 
 This script is NOT run on every build. Its output is committed as
-``template/iso-reference.docx`` and used directly by ``make docx``; run this
-script by hand to regenerate that file whenever the ISO template (or this
+``tools/template/iso-reference.docx`` and used directly by ``make docx``; run
+this script by hand to regenerate that file whenever the ISO template (or this
 script) changes. The ISO template itself is deliberately NOT committed — it is
 ISO-copyrighted and carries personal and classification metadata (docProps) —
 so obtain it from ISO/IEC JTC 1/SC 17 WG 10 and place it at
-``template/Word_template_for_ISO_standards.dotx`` (or pass its path) to
-regenerate. ``tests/test_iso_reference.py`` checks the committed file matches
+``tools/template/Word_template_for_ISO_standards.dotx`` (or pass its path) to
+regenerate. ``tools/tests/test_iso_reference.py`` checks the committed file matches
 what this script produces whenever that template is present locally, and
 always checks that no ISO metadata/boilerplate ships in any committed Word
 file.
@@ -44,7 +44,7 @@ through so the document keeps the ISO look-and-feel.
 Usage:
     python3 tools/make-iso-reference.py [INPUT.dotx] [OUTPUT.docx]
 
-Defaults: template/Word_template_for_ISO_standards.dotx -> template/iso-reference.docx
+Defaults: tools/template/Word_template_for_ISO_standards.dotx -> tools/template/iso-reference.docx
 """
 from __future__ import annotations
 
@@ -194,8 +194,8 @@ def build(src: Path) -> bytes:
 
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
-    src = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "template" / "Word_template_for_ISO_standards.dotx"
-    dst = Path(sys.argv[2]) if len(sys.argv) > 2 else root / "template" / "iso-reference.docx"
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "tools" / "template" / "Word_template_for_ISO_standards.dotx"
+    dst = Path(sys.argv[2]) if len(sys.argv) > 2 else root / "tools" / "template" / "iso-reference.docx"
 
     if not src.is_file():
         print(f"error: template not found: {src}", file=sys.stderr)
