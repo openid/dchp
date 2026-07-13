@@ -99,10 +99,6 @@ In this document, the following verbal forms are used:
 These verbal forms are used in accordance with ISO/IEC Directives, Part 2,
 Clause 7 (see <https://www.iso.org/directives-and-policies.html>).
 
-# Requirements
-
-To be completed.
-
 {backmatter}
 
 # Bibliography
