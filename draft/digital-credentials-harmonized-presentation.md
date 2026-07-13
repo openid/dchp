@@ -112,8 +112,7 @@ drafting of ISO and IEC documents*
 
 # Acknowledgements {#Acknowledgements}
 
-We would like to thank the members of ISO/IEC JTC 1/SC 17 WG 10 and the
-OpenID Foundation Digital Credentials Protocols (DCP) Working Group for their
+We would like to thank TBD for their
 valuable feedback and contributions to this specification.
 
 # Document History
