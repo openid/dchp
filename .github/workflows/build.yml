@@ -77,32 +77,110 @@ jobs:
           name: iso-word-document
           path: build/${{ env.DOC }}.docx
 
+  # The site is served from the gh-pages branch (Pages source: "Deploy from a
+  # branch"): main's Editor's Copy lives at the root, and per-PR previews live
+  # under PREVIEW-DO-NOT-USE/pr-<N>/ (removed again by preview-cleanup.yml).
+  # Same model as the openid/publication repo.
   publish-to-pages:
     name: Publish Editor's Copy to GitHub Pages
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
-    # Serialise Pages deployments so two quick merges to main can't race (one
-    # failing with "a deployment is already in progress", or publishing stale).
+    # Serialise gh-pages pushes so two quick merges to main can't race.
     concurrency:
       group: "pages"
       cancel-in-progress: false
     permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
     steps:
+      - uses: actions/checkout@v4
       - name: Download site artifact
         uses: actions/download-artifact@v4
         with:
           name: site
-          path: _site
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+          path: ${{ runner.temp }}/site
+      - name: Publish to gh-pages branch
+        # Run a copy from outside the work tree: the script switches the
+        # checkout to gh-pages, which has no tools/.
+        run: |
+          cp tools/publish-gh-pages.sh "$RUNNER_TEMP/"
+          bash "$RUNNER_TEMP/publish-gh-pages.sh" root "$RUNNER_TEMP/site" \
+            "Publish Editor's Copy for ${GITHUB_SHA}"
+
+  # HTML preview of the PR's Editor's Copy, linked from a sticky PR comment.
+  # Fork PRs get a read-only GITHUB_TOKEN, so previews only run for branches in
+  # this repo.
+  deploy-preview:
+    name: Deploy PR preview to GitHub Pages
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download site artifact
+        uses: actions/download-artifact@v4
         with:
-          path: _site
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          name: site
+          path: ${{ runner.temp }}/site
+      - name: Deploy preview to gh-pages branch
+        run: |
+          cp tools/publish-gh-pages.sh "$RUNNER_TEMP/"
+          bash "$RUNNER_TEMP/publish-gh-pages.sh" subdir \
+            "PREVIEW-DO-NOT-USE/pr-${{ github.event.pull_request.number }}" \
+            "$RUNNER_TEMP/site" \
+            "Preview for PR #${{ github.event.pull_request.number }}"
+      - name: Comment with preview link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNum = context.issue.number;
+            const sha = context.payload.pull_request.head.sha;
+            // Assumes the default <owner>.github.io/<repo> Pages host (no CNAME).
+            const url = `https://${context.repo.owner}.github.io/${context.repo.repo}/PREVIEW-DO-NOT-USE/pr-${prNum}/${process.env.DOC}-editors-copy.html`;
+
+            // Invisible marker identifying our comment, so the visible heading
+            // can be reworded without breaking the update-in-place matching.
+            const marker = '<!-- dchp-preview-comment -->';
+            const body = [
+              '📄 **Editor\'s Copy preview**',
+              '',
+              url,
+              '',
+              `_Preview of ${sha}; updated on every push. For review only — ` +
+              'the official specifications are published at https://openid.net/specs/_',
+              marker,
+            ].join('\n');
+
+            // Update the existing preview comment rather than adding a new one.
+            let existing = null;
+            for await (const response of github.paginate.iterator(
+              github.rest.issues.listComments,
+              { owner: context.repo.owner, repo: context.repo.repo, issue_number: prNum, per_page: 100 }
+            )) {
+              const found = response.data.find(c => c.body.includes(marker));
+              if (found) { existing = found; break; }
+            }
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNum,
+                body,
+              });
+            }
