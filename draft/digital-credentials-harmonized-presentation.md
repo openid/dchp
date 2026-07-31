@@ -229,6 +229,8 @@ For non-post-quantum-cryptography (non-PQC) operations, **HPKE** is mandated, po
 
 # Reader Authentication
 
+> This section does not yet have working group consensus, which is tracked in [issue #26](https://github.com/openid/dchp/issues/26).
+
 The verifier can optionally authenticate itself using the `reader_auth` field in the top-level `CredentialRequest`.
 
 - **Structure:** Uses a standard `COSE_Sign` structure.
@@ -237,6 +239,8 @@ The verifier can optionally authenticate itself using the `reader_auth` field in
 
 
 # Transaction Transcript
+
+> This section does not yet have working group consensus, which is tracked in [issue #27](https://github.com/openid/dchp/issues/27).
 
 The transaction transcript provides a cryptographic context binding across all protocol operations, ensuring that messages from one session cannot be replayed in another, and that the verifier and wallet are bound to the same channel and request.
 
@@ -308,7 +312,7 @@ These fields capture the data-transport channel over which the credential presen
 
 # Credential Response
 
-> This section does not yet have working group consensus, which is tracked in [issue #27](https://github.com/openid/dchp/issues/27).
+> This section does not yet have working group consensus, which is tracked in [issue #28](https://github.com/openid/dchp/issues/28).
 
 The `CredentialResponse` contains any combination of an optional unencrypted envelope and zero or more encrypted envelopes. Both fields are optional; at least one should be present in a well-formed response. Each envelope is **self-contained**: it holds its own credential pool and its own scenario map. A credential that must appear in multiple envelopes is duplicated across them; no cross-envelope references exist.
 
