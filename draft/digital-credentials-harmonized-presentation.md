@@ -58,7 +58,7 @@ The objective is to enable interoperability among the parties involved in the
 presentation of digital credentials while allowing existing deployments to
 continue to operate.
 
-> Development of this specification started with an initial starting contribution. This initial contribution was accepted as a starting point, but it doesn't yet contitute consensus on it's full content. Each section will therefore have a note at the start of that section to track whether the dchp working group considers that section to have consensus. There is a linked issue for each section to track this.
+> Development of this specification started with an initial starting contribution. This initial contribution was accepted as a starting point, but it doesn't yet constitute consensus on its full content. Each section will therefore have a note at the start of that section to track whether the DCHP working group considers that section to have consensus. There is a linked issue for each section to track this.
 
 {mainmatter}
 
