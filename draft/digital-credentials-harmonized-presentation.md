@@ -654,9 +654,9 @@ Cryptographic binding for mdocs is mdoc authentication: the `DeviceAuth` structu
 
 An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-bound mdoc: its `Document` contains no `DeviceSigned` structure and mdoc authentication does not apply to it. `support_no_cryptographic_binding` corresponds to the `nonKeyBoundSupported` element of `DocRequestInfo` in ISO/IEC 18013-5. If `support_no_cryptographic_binding` is `true`, the wallet may return a non-key-bound mdoc; otherwise, the wallet shall not return a non-key-bound mdoc.
 
-> **Note:** ISO/IEC 18013-5 requires an mDL (`org.iso.18013.5.1.mDL`) to always be key-bound; non-key-bound mdocs are only possible for other document types.
+> **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above and the note below follow the changes proposed for its DIS ballot and are to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
 
-> **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above follows the changes proposed for its DIS ballot and is to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
+> **Note:** ISO/IEC 18013-5 requires an mDL (`org.iso.18013.5.1.mDL`) to always be key-bound; non-key-bound mdocs are only possible for other document types.
 
 ## Response Structure
 
