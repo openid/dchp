@@ -607,7 +607,7 @@ The `credential_format` value for mdocs is `mso_mdoc`. The `format` field of a `
 
 ## Path
 
-The `path` of a `DataElementDef` has exactly two elements: the `NameSpace` and the `DataElementIdentifier` of the requested data element, in that order, e.g., `["org.iso.18013.5.1", "family_name"]`. In the response, the requested data element is returned under that namespace in the `Document`, in either `IssuerSignedItems` or `DeviceSignedItems`, as defined in ISO/IEC 18013-5. Which of the two is used is determined by the mdoc, subject to the `KeyAuthorizations` granted by the issuing authority in the MSO; the verifier validates this as part of mdoc authentication, as defined in ISO/IEC 18013-5.
+The `path` of a `DataElementDef` has exactly two elements: the `NameSpace` and the `DataElementIdentifier` of the requested data element, in that order, e.g., `["org.iso.18013.5.1", "family_name"]`. In the response, the requested data element is returned under that namespace in the `Document`, either as an `IssuerSignedItem` in `IssuerNameSpaces` or in `DeviceSignedItems` in `DeviceNameSpaces`, as defined in ISO/IEC 18013-5. Which of the two is used is determined by the mdoc, subject to the `KeyAuthorizations` granted by the issuing authority in the MSO; the verifier validates this as part of mdoc authentication, as defined in ISO/IEC 18013-5.
 
 ```cddl
 ; An mdoc DataElementDef.path is [ NameSpace, DataElementIdentifier ]
