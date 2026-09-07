@@ -595,7 +595,7 @@ Clause 7 (see <https://www.iso.org/directives-and-policies.html>).
 
 # ISO mdoc Credential Format {#annex-mdoc}
 
-This annex defines how the protocol specified in this document is used with mdocs as defined in ISO/IEC 18013-5. It does not redefine the mdoc format: the structures referred to in this annex (`DocType`, `NameSpace`, `DataElementIdentifier`, `IssuerSignedItem`, `IssuerSigned`, `DeviceSigned`, `DeviceAuth`, `DeviceAuthentication`, `DeviceKeyInfo`, `DocRequestInfo`, `SessionTranscript` and `Document`) are defined in ISO/IEC 18013-5.
+This annex defines how the protocol specified in this document is used with mdocs as defined in ISO/IEC 18013-5. It does not redefine the mdoc format: the structures referred to in this annex (`DocType`, `NameSpace`, `DataElementIdentifier`, `IssuerNameSpaces`, `IssuerSignedItem`, `IssuerSigned`, `IssuerAuth`, `MobileSecurityObject` (MSO), `KeyAuthorizations`, `DeviceNameSpaces`, `DeviceSignedItems`, `DeviceSigned`, `DeviceAuth`, `DeviceAuthentication`, `DeviceKeyInfo`, `DocRequestInfo`, `SessionTranscript` and `Document`) are defined in ISO/IEC 18013-5.
 
 ## Credential Format Identifier
 
@@ -680,7 +680,7 @@ The exact derivation of the `SessionTranscript` from the `WalletTransactionTrans
 
 # SD-JWT VC Credential Format {#annex-sd-jwt-vc}
 
-This annex defines how the protocol specified in this document is used with SD-JWT VCs as defined in draft-ietf-oauth-sd-jwt-vc (SD-JWT VC), which builds on RFC 9901 (SD-JWT). It does not redefine the format: the structures referred to in this annex (Issuer-signed JWT, Disclosure, Key Binding JWT (KB-JWT), and the `vct`, `iss` and `cnf` claims) are defined in those documents.
+This annex defines how the protocol specified in this document is used with SD-JWT VCs as defined in draft-ietf-oauth-sd-jwt-vc (SD-JWT VC), which builds on RFC 9901 (SD-JWT). It does not redefine the format: the structures referred to in this annex (Issuer-signed JWT, Disclosure, Key Binding JWT (KB-JWT), and the `vct`, `iss` and `cnf` claims) are defined in those documents; the `x5c` JOSE header is defined in RFC 7515 (JWS).
 
 ## Credential Format Identifier
 
