@@ -731,7 +731,7 @@ sdjwtExtensions = {
 
 Cryptographic binding for SD-JWT VCs is Key Binding: a KB-JWT signed with the key in the `cnf` claim of the SD-JWT VC, as defined in SD-JWT.
 
-If `support_no_cryptographic_binding` is `true`, the wallet may return an SD-JWT VC presentation without a KB-JWT (for example, for a credential that has no `cnf` claim). Otherwise, the presentation shall include a KB-JWT.
+If `support_no_cryptographic_binding` is `true`, the wallet may return an SD-JWT VC that has no `cnf` claim, presented without a KB-JWT; otherwise, the wallet shall not return such an SD-JWT VC. An SD-JWT VC that has a `cnf` claim shall always be presented with a KB-JWT.
 
 ## Response Structure
 
