@@ -704,7 +704,7 @@ To be completed; tracked in [issue #9](https://github.com/openid/dchp/issues/9).
 
 ## Issuer Identifiers
 
-When the Issuer-signed JWT carries an `x5c` header, each value in `x509_ref` is compared against the Authority Key Identifier extension of the certificates in that chain.
+When the Issuer-signed JWT carries an `x5c` header, the SD-JWT VC satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the KeyIdentifier of the AuthorityKeyIdentifier extension of one of the certificates in that `x5c` header.
 
 > **Editor's note:** SD-JWT VC issuers can also be identified without X.509 certificates, through the `iss` claim (an HTTPS URL resolved via JWT VC Issuer Metadata) or a DID. `issuer_identifiers` currently only defines `x509_ref`; how such issuers are requested is to be completed.
 
