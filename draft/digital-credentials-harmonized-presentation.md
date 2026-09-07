@@ -327,7 +327,7 @@ Each `CredentialItem`:
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `format` | `1` | `tstr` | The format of the returned credential |
+| `format` | `1` | `tstr` | Credential format identifier of the returned credential, see [Credential Formats](#credential-formats) |
 | `data` | `2` | `$CredentialData` | The credential data; the type is defined by the credential format definition |
 
 ## Credential Data Types
