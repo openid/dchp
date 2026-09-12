@@ -106,14 +106,14 @@ The `RequestPayload` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
+| `scenario_sets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
 | `CredentialQueries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
 
 ## Scenario Sets
 
-A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet`s are carried as a map in `RequestPayload`, keyed directly by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
+A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `scenario_sets`s are carried as a map in `RequestPayload`, keyed directly by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
