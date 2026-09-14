@@ -73,6 +73,8 @@ all of their content constitutes requirements of this document.
 
 ISO/IEC 18013-5, *Personal identification — ISO-compliant driving licence — Part 5: Mobile driving licence (mDL) application*
 
+IETF RFC 7515, *JSON Web Signature (JWS)*, <https://www.rfc-editor.org/rfc/rfc7515>
+
 IETF RFC 9901, *Selective Disclosure for JSON Web Tokens*, <https://www.rfc-editor.org/rfc/rfc9901>
 
 IETF draft-ietf-oauth-sd-jwt-vc, *SD-JWT-based Verifiable Digital Credentials (SD-JWT VC)*, <https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/>
