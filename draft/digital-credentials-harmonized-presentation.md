@@ -127,17 +127,21 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 
 ## Credential Queries
 
-A `CredentialQuery` defines the exact credential requirements for a single credential type.
+A `CredentialQuery` defines the exact credential requirements for one or more closely related credential types.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `credential_format` | `1` | `tstr` | M | Format identifier (e.g., `"mso_mdoc"`, `"vc+sd-jwt"`) |
-| `credential_type` | `2` | `tstr` | M | Credential type (e.g., `"org.iso.18013.5.1.mDL"`) |
+| `credential_type` | `2` | `[ + tstr ]` | M | Acceptable credential types (e.g., `["org.iso.18013.5.1.mDL"]`). The wallet may present a credential of any listed type |
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
 | `general_extensions` | `5` | `generalExtensions` | O | Protocol-level extensions applicable across formats |
 | `format_extensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `mdocExtensions`, `sdjwtExtensions`) |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
+
+Listing multiple values in `credential_type` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type). The same effect could be achieved by defining multiple `CredentialQuery` entries.
+The verifier MUST ensure that every element in `elements_dict` is defined for each listed credential type.
+If the requirements differ between credential types, the verifier MUST use separate `CredentialQuery` entries instead.
 
 ### General Extensions
 
@@ -408,7 +412,7 @@ CredentialCombination = [ + CredentialRef ]
 
 CredentialQuery = {
   credential_format:    1 => tstr,
-  credential_type:      2 => tstr,
+  credential_type:      2 => [ + tstr ],
   elements_dict:        3 => { + ElementRef => DataElementDef },
   requested_elements:   4 => ElementLogic,
   ? general_extensions: 5 => generalExtensions,
@@ -601,4 +605,5 @@ valuable feedback and contributions to this specification.
 
    -00
 
+   * make credential_type an array
    * initial working draft
