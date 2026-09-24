@@ -127,7 +127,7 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 
 ## Credential Queries
 
-A `CredentialQuery` defines the exact credential requirements for one or more closely related credential types.
+A `CredentialQuery` defines the exact credential requirements for one or more credential types.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -139,7 +139,7 @@ A `CredentialQuery` defines the exact credential requirements for one or more cl
 | `format_extensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `mdocExtensions`, `sdjwtExtensions`) |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
 
-Listing multiple values in `credential_type` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type). It is equivalent to defining one `CredentialQuery` per listed credential type, identical in all other respects, and offering them as alternatives.
+Listing multiple values in `credential_types` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type). It is equivalent to defining one `CredentialQuery` per listed credential type, identical in all other respects, and offering them as alternatives.
 The verifier shall ensure that every element in `elements_dict` is defined for each listed credential type.
 If the requirements differ between credential types, the verifier shall use separate `CredentialQuery` entries instead.
 
