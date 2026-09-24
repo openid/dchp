@@ -515,7 +515,7 @@ CredentialItem = {
 ; FORMAT-SPECIFIC DATA
 ; $CredentialData is a socket (RFC 8610, Section 3.9): each credential
 ; format definition adds the type of its credential data to it, e.g.
-;   $CredentialData /= Document
+;   $CredentialData /= MdocData
 ; ==========================================
 ```
 
@@ -662,12 +662,12 @@ An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-boun
 
 ## Response Structure
 
-A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to a `Document`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure (`docType`, `issuerSigned`, `deviceSigned` unless the mdoc is non-key-bound, and, if applicable, `errors`) for the presented mdoc. `Document` extends the `$CredentialData` socket.
+A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure (`docType`, `issuerSigned`, `deviceSigned` unless the mdoc is non-key-bound, and, if applicable, `errors`) for the presented mdoc. `MdocData` extends the `$CredentialData` socket.
 
 ```cddl
-$CredentialData /= Document
+$CredentialData /= MdocData
 
-Document = bstr   ; CBOR-encoded ISO/IEC 18013-5 Document structure
+MdocData = bstr .cbor Document   ; Document is defined in ISO/IEC 18013-5
 ```
 
 ## Transaction Data
