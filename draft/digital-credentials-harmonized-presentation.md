@@ -631,7 +631,7 @@ An mdoc satisfies the `issuer_identifiers` request if one of the values in `x509
 
 ## Format-Specific Extensions
 
-For mdocs, `format_extensions` contains an `mdocExtensions` map, which extends the `$formatExtensions` socket:
+For mdocs, `format_extensions` contains an `mdocExtensions` map:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -662,7 +662,7 @@ An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-boun
 
 ## Response Structure
 
-A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure (`docType`, `issuerSigned`, `deviceSigned` unless the mdoc is non-key-bound, and, if applicable, `errors`) for the presented mdoc. `MdocData` extends the `$CredentialData` socket.
+A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure (`docType`, `issuerSigned`, `deviceSigned` unless the mdoc is non-key-bound, and, if applicable, `errors`) for the presented mdoc.
 
 ```cddl
 $CredentialData /= MdocData
@@ -712,7 +712,7 @@ When the Issuer-signed JWT carries an `x5c` header, the SD-JWT VC satisfies the 
 
 ## Format-Specific Extensions
 
-For SD-JWT VCs, `format_extensions` contains an `sdjwtExtensions` map, which extends the `$formatExtensions` socket:
+For SD-JWT VCs, `format_extensions` contains an `sdjwtExtensions` map:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -737,7 +737,7 @@ If `support_no_cryptographic_binding` is `true`, the wallet may return an SD-JWT
 
 ## Response Structure
 
-A `CredentialItem` carrying an SD-JWT VC has `format` set to `dc+sd-jwt` and `data` set to `SdJwtData`: a text string containing the SD-JWT presentation in its compact serialization, `<Issuer-signed JWT>~<Disclosure 1>~...~<Disclosure N>~<KB-JWT>`. When no KB-JWT is included, the presentation ends with the trailing `~`, as defined in SD-JWT. `SdJwtData` extends the `$CredentialData` socket.
+A `CredentialItem` carrying an SD-JWT VC has `format` set to `dc+sd-jwt` and `data` set to `SdJwtData`: a text string containing the SD-JWT presentation in its compact serialization, `<Issuer-signed JWT>~<Disclosure 1>~...~<Disclosure N>~<KB-JWT>`. When no KB-JWT is included, the presentation ends with the trailing `~`, as defined in SD-JWT.
 
 ```cddl
 $CredentialData /= SdJwtData
