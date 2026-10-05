@@ -237,6 +237,15 @@ The verifier can optionally authenticate itself using the `reader_auth` field in
 - **Payload:** The signature uses a **detached payload**.
 - **Detached payload content:** The raw CBOR-encoded `RequestPayload` together with the **transaction transcript**.
 
+## Public key authentication ##
+
+This document specifies the following methods to authenticate the public key used for reader authentication:
+- X.509 certificate
+
+Other mechanisms may be used and are out of scope of this document.
+
+When using an X.509 certificate to authenticate the reader authentication public key, that certificate shall be included as an x5chain element in the protected header of the COSE_Signature structure. The x5chain element shall contain at least 1 certificate and may contain more. The x5chain element is defined in RFC 9360.
+
 
 # Transaction Transcript
 
