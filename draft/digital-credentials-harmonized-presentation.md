@@ -88,6 +88,17 @@ To be completed.
 # Symbols and abbreviated terms
 
 To be completed.
+
+# CBOR Encoding {#cbor-encoding}
+
+All CBOR data items defined in this document shall be encoded in accordance with the core deterministic encoding requirements defined in [RFC 8949, Section 4.2.1](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1).
+
+The floating-point values NaN, Infinity and -Infinity shall not be used.
+
+These requirements do not apply to the content of byte strings that carry structures defined outside this document (e.g. mdoc data structures like `Document` or `DeviceEngagement`). Those external data structures are conveyed and processed as received.
+
+> **Note:** The deterministic serialization defined in draft-ietf-cbor-serialization [2] is the same as RFC 8949, Section 4.2.1 except for the encoding of NaN values, which are not used in this document.
+
 # Credential Request
 > This section does not yet have working group consensus, which is tracked in [issue #24](https://github.com/openid/dchp/issues/24).
 
@@ -245,6 +256,8 @@ The verifier can optionally authenticate itself using the `reader_auth` field in
 The transaction transcript provides a cryptographic context binding across all protocol operations, ensuring that messages from one session cannot be replayed in another, and that the verifier and wallet are bound to the same channel and request.
 
 Because deterministic CBOR encoding (RFC 8949 §4.2) is required throughout this protocol, the transcript is defined as a **CBOR map** rather than a fixed-order array. Deterministic CBOR guarantees a unique canonical byte encoding for any given map value, making it safe to hash or sign over without ambiguity. This is the key difference from the ISO/IEC 18013-5 `SessionTranscript` array, which used a fixed order precisely to achieve the same determinism property.
+
+The transcripts are never transmitted and the verifier and the wallet each construct them independently and shall encode them as specified in [CBOR Encoding](#cbor-encoding), so that both obtain identical byte representations.
 
 Two transcript types are defined:
 
@@ -518,7 +531,8 @@ SdJwtData = tstr   ; SD-JWT combined presentation string
 ```cddl
 ; ==========================================
 ; TRANSACTION TRANSCRIPTS
-; Deterministic CBOR encoding (RFC 8949 §4.2) is REQUIRED for all transcript values.
+; Transcripts shall be encoded as specified in the "CBOR Encoding" clause
+; (RFC 8949, Section 4.2.1).
 ; ==========================================
 
 ; Used by the verifier: for reader authentication and as info parameter for response encryption.
@@ -590,6 +604,9 @@ Clause 7 (see <https://www.iso.org/directives-and-policies.html>).
 [1] ISO/IEC Directives, Part 2, *Principles and rules for the structure and
 drafting of ISO and IEC documents*
 
+[2] IETF Internet-Draft draft-ietf-cbor-serialization, *CBOR Serialization and
+Determinism* (work in progress)
+
 # Acknowledgements {#Acknowledgements}
 
 We would like to thank TBD for their
@@ -597,8 +614,9 @@ valuable feedback and contributions to this specification.
 
 # Document History
 
-   [[ To be removed from the final specification ]]
+[[ To be removed from the final specification ]]
 
-   -00
+-00
 
-   * initial working draft
+ * adds definition on deterministic cbor encoding
+ * initial working draft
