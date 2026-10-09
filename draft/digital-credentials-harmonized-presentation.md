@@ -132,7 +132,7 @@ A `CredentialQuery` defines the exact credential requirements for one or more cr
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `credential_format` | `1` | `tstr` | M | Format identifier (e.g., `"mso_mdoc"`, `"vc+sd-jwt"`) |
-| `credential_types` | `2` | `[ + tstr ]` | M | Acceptable credential types (e.g., `["org.iso.18013.5.1.mDL"]`). The wallet may present a credential of any listed type |
+| `credential_types` | `2` | `[ + tstr ]` | M | Acceptable credential types (e.g., `["org.iso.18013.5.1.mDL"]`). |
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
 | `general_extensions` | `5` | `generalExtensions` | O | Protocol-level extensions applicable across formats |
