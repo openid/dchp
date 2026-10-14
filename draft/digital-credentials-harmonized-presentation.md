@@ -602,7 +602,7 @@ Clause 7 (see <https://www.iso.org/directives-and-policies.html>).
 
 # ISO mdoc Credential Format {#annex-mdoc}
 
-This annex defines how the protocol specified in this document is used with mdocs as defined in ISO/IEC 18013-5. It does not redefine the mdoc format: the structures referred to in this annex (`DocType`, `NameSpace`, `DataElementIdentifier`, `IssuerNameSpaces`, `IssuerSignedItem`, `IssuerSigned`, `IssuerAuth`, `MobileSecurityObject` (MSO), `KeyAuthorizations`, `DeviceNameSpaces`, `DeviceSignedItems`, `DeviceSigned`, `DeviceAuth`, `DeviceAuthentication`, `DeviceKeyInfo`, `DocRequestInfo`, `SessionTranscript` and `Document`) are defined in ISO/IEC 18013-5.
+This annex defines how the protocol specified in this document is used with mdocs as defined in ISO/IEC 18013-5. It does not redefine the mdoc format: the structures referred to in this annex (`DocType`, `NameSpace`, `DataElementIdentifier`, `IssuerNameSpaces`, `IssuerSignedItem`, `IssuerSigned`, `IssuerAuth`, `MobileSecurityObject` (MSO), `KeyAuthorizations`, `DeviceNameSpaces`, `DeviceSignedItems`, `DeviceSigned`, `DeviceAuth`, `DeviceAuthentication`, `DeviceKeyInfo`, `SessionTranscript` and `Document`) are defined in ISO/IEC 18013-5.
 
 ## Credential Format Identifier
 
@@ -659,7 +659,7 @@ mdocExtensions = {
 
 Cryptographic binding for mdocs is mdoc authentication: the `DeviceAuth` structure in `DeviceSigned`, produced with the device key in the `DeviceKeyInfo` structure of the MSO, as defined in ISO/IEC 18013-5.
 
-An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-bound mdoc: its `Document` contains no `DeviceSigned` structure and mdoc authentication does not apply to it. `support_no_cryptographic_binding` corresponds to the `nonKeyBoundSupported` element of `DocRequestInfo` in ISO/IEC 18013-5. If `support_no_cryptographic_binding` is `true`, the wallet may return a non-key-bound mdoc; otherwise, the wallet shall not return a non-key-bound mdoc.
+An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-bound mdoc: its `Document` contains no `DeviceSigned` structure and mdoc authentication does not apply to it. If `support_no_cryptographic_binding` is `true`, the wallet may return a non-key-bound mdoc; otherwise, the wallet shall not return a non-key-bound mdoc.
 
 > **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above and the note below follow the changes proposed for its DIS ballot and are to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
 
