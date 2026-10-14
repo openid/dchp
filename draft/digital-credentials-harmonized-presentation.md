@@ -369,7 +369,7 @@ A credential format definition shall specify:
 7. how the cryptographic binding parameter request (`support_no_cryptographic_binding`) applies;
 8. the structure of the credential data (`data`) returned in the response for this format;
 9. how the transaction data request (`credential_auth_data`) applies for this format;
-10. how the `WalletTransactionTranscript` is included in the cryptographic binding of the response
+10. how the `WalletTransactionTranscript` is included in the cryptographic binding of the response.
 
 A credential format definition extends the `$formatExtensions` and `$CredentialData` CDDL sockets defined in [CDDL Definitions](#cddl-definitions) with the types it defines for `format_extensions` and `data`.
 
@@ -661,7 +661,7 @@ Cryptographic binding for mdocs is mdoc authentication: the `DeviceAuth` structu
 
 An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-bound mdoc: its `Document` contains no `DeviceSigned` structure and mdoc authentication does not apply to it. If `support_no_cryptographic_binding` is `true`, the wallet may return a non-key-bound mdoc; otherwise, the wallet shall not return a non-key-bound mdoc.
 
-> **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above and the note below follow the changes proposed for its DIS ballot and are to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
+> **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above follows the changes proposed for its DIS ballot and is to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
 
 ## Response Structure
 
