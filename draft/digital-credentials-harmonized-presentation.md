@@ -136,7 +136,7 @@ A `credential_query` defines the exact credential requirements for a single cred
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
 | `GeneralExtensions` | `5` | `GeneralExtensions` | O | Protocol-level extensions applicable across formats |
-| `FormatExtensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `MdocExtensions`, `SdjwtExtensions`) |
+| `FormatExtensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `mdocExtensions`, `sdjwtExtensions`) |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
 
 ### General Extensions
@@ -150,7 +150,7 @@ A `credential_query` defines the exact credential requirements for a single cred
 
 ### Format-Specific Extensions
 
-**`MdocExtensions`:**
+**`mdocExtensions`:**
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -159,7 +159,7 @@ A `credential_query` defines the exact credential requirements for a single cred
 
 > **Note:** A verifier that has no constraint on one of the two algorithm classes should include the field with a permissive list of acceptable values rather than omitting it.
 
-**`SdjwtExtensions`:**
+**`sdjwtExtensions`:**
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -425,15 +425,15 @@ generalExtensions = {
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-formatExtensions = MdocExtensions / SdjwtExtensions / ZkFormatExtensions
+formatExtensions = mdocExtensions / sdjwtExtensions / zkFormatExtensions
 
-MdocExtensions = {
+mdocExtensions = {
   ? issuer_alg_values: 1 => [ + int ],
   ? device_alg_values: 2 => [ + int ],
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-SdjwtExtensions = {
+sdjwtExtensions = {
   ? sd-jwt_alg_values: 1 => [ + tstr ],
   ? kb-jwt_alg_values: 2 => [ + tstr ],
   * int / tstr => any             ; int = RFU, tstr = application-specific
