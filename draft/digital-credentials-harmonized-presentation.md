@@ -425,15 +425,15 @@ generalExtensions = {
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-formatExtensions = mdocExtensions / sdjwtExtensions / zkFormatExtensions
+formatExtensions = MdocExtensions / SdjwtExtensions / ZkFormatExtensions
 
-mdocExtensions = {
+MdocExtensions = {
   ? issuer_alg_values: 1 => [ + int ],
   ? device_alg_values: 2 => [ + int ],
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-sdjwtExtensions = {
+SdjwtExtensions = {
   ? sd-jwt_alg_values: 1 => [ + tstr ],
   ? kb-jwt_alg_values: 2 => [ + tstr ],
   * int / tstr => any             ; int = RFU, tstr = application-specific
