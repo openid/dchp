@@ -345,7 +345,7 @@ The type and encoding of `data` are defined by the credential format definition 
 
 # Credential Formats {#credential-formats}
 
-The protocol defined in this document is independent of the credential format. The request and response structures carry format-specific content in a small number of well-defined places: the credential format identifier, the credential type, the element path, the format-specific extensions, and the credential data returned in the response. How each of these is used for a given credential format is specified by a **credential format definition**, which shall specify the items listed in [Requirements on Credential Format Definitions](#format-definition-requirements).
+The protocol defined in this document supports multiple credential formats. [Requirements on Credential Format Definitions](#format-definition-requirements) specify which parts of the protocol depend on the credential format.
 
 This document contains credential format definitions for the following credential formats:
 
@@ -363,13 +363,13 @@ A credential format definition shall specify:
 1. the value of the credential format identifier (`credential_format`);
 2. the content of the credential type field (`credential_type`);
 3. the meaning of the `path` element of a `DataElementDef`, and how it relates to specific fields in the credential and in the response;
-4. how value matching (`value_match`) works;
+4. how value matching (`value_match`) is performed;
 5. how the issuer identifier request (`issuer_identifiers`) applies;
 6. any format-specific extensions (`format_extensions`), for example cryptographic algorithm values;
 7. how the cryptographic binding parameter request (`support_no_cryptographic_binding`) applies;
 8. the structure of the credential data (`data`) returned in the response for this format;
-9. what the transaction data request (`credential_auth_data`) means for this format;
-10. how the transaction transcript is included in the response.
+9. how the transaction data request (`credential_auth_data`) applies for this format;
+10. how the `WalletTransactionTranscript` is included in the cryptographic binding of the response
 
 A credential format definition extends the `$formatExtensions` and `$CredentialData` CDDL sockets defined in [CDDL Definitions](#cddl-definitions) with the types it defines for `format_extensions` and `data`.
 
@@ -630,7 +630,7 @@ To be completed; tracked in [issue #9](https://github.com/openid/dchp/issues/9).
 
 An mdoc satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the KeyIdentifier of the AuthorityKeyIdentifier extension of one of the certificates in the `x5chain` element of the `IssuerAuth` header of the mdoc.
 
-> **Note:** The IACA root certificate is not included in the `x5chain`. A verifier that includes the subject key identifier of the certificate it uses to verify mdocs from a particular issuer (e.g., the IACA certificate) will match the authority key identifier of one of the certificates in the `x5chain`.
+> **Note:** A verifier that includes the subject key identifier of the certificate it uses to verify mdocs from a particular issuer (e.g., the IACA certificate) will match the authority key identifier of one of the certificates in the `x5chain`.
 
 > **Editor's note:** This is the same rule as the `IssuerIdentifiers` structure being defined in the second edition of ISO/IEC 18013-5.
 
@@ -663,11 +663,9 @@ An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-boun
 
 > **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above and the note below follow the changes proposed for its DIS ballot and are to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
 
-> **Note:** ISO/IEC 18013-5 requires an mDL (`org.iso.18013.5.1.mDL`) to always be key-bound; non-key-bound mdocs are only possible for other document types.
-
 ## Response Structure
 
-A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure (`docType`, `issuerSigned`, `deviceSigned` unless the mdoc is non-key-bound, and, if applicable, `errors`) for the presented mdoc.
+A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure for the presented mdoc.
 
 ```cddl
 $CredentialData /= MdocData
