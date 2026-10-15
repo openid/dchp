@@ -88,7 +88,9 @@ To be completed.
 # Symbols and abbreviated terms
 
 M      Mandatory
+
 C      Conditional
+
 O      Optional
 
 # Credential Request
