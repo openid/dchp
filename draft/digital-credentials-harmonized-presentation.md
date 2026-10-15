@@ -73,6 +73,8 @@ all of their content constitutes requirements of this document.
 
 ISO/IEC 18013-5, *Personal identification — ISO-compliant driving licence — Part 5: Mobile driving licence (mDL) application*
 
+IETF RFC 5280, *Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile*, <https://www.rfc-editor.org/rfc/rfc5280>
+
 IETF RFC 7515, *JSON Web Signature (JWS)*, <https://www.rfc-editor.org/rfc/rfc7515>
 
 IETF RFC 9901, *Selective Disclosure for JSON Web Tokens*, <https://www.rfc-editor.org/rfc/rfc9901>
@@ -628,7 +630,7 @@ To be completed; tracked in [issue #9](https://github.com/openid/dchp/issues/9).
 
 ## Issuer Identifiers
 
-An mdoc satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the KeyIdentifier of the AuthorityKeyIdentifier extension of one of the certificates in the `x5chain` element of the `IssuerAuth` header of the mdoc.
+An mdoc satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the `keyIdentifier` field of the Authority Key Identifier extension (RFC 5280) of one of the certificates in the `x5chain` element of the `IssuerAuth` header of the mdoc.
 
 > **Note:** A verifier that includes the subject key identifier of the certificate it uses to verify mdocs from a particular issuer (e.g., the IACA certificate) will match the authority key identifier of one of the certificates in the `x5chain`.
 
@@ -709,7 +711,7 @@ To be completed; tracked in [issue #9](https://github.com/openid/dchp/issues/9).
 
 ## Issuer Identifiers
 
-When the Issuer-signed JWT carries an `x5c` header, the SD-JWT VC satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the KeyIdentifier of the AuthorityKeyIdentifier extension of one of the certificates in that `x5c` header.
+When the Issuer-signed JWT carries an `x5c` header, the SD-JWT VC satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the `keyIdentifier` field of the Authority Key Identifier extension (RFC 5280) of one of the certificates in that `x5c` header.
 
 > **Editor's note:** SD-JWT VC issuers can also be identified without X.509 certificates, through the `iss` claim (an HTTPS URL resolved via JWT VC Issuer Metadata) or a DID. `issuer_identifiers` currently only defines `x509_ref`; how such issuers are requested is to be completed.
 
