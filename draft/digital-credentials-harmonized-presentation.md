@@ -701,9 +701,9 @@ The `credential_format` value for SD-JWT VCs is `dc+sd-jwt`.
 
 ## Path
 
-The `path` of a `DataElementDef` is the sequence of JSON object keys leading from the root of the SD-JWT VC payload (after all Disclosures have been processed) to the requested claim; each element of the path selects the member with that name one level deeper, e.g., `["address", "street_address"]`. In the response, the requested claim is returned by including the Disclosures needed to reveal it, together with those of any selectively disclosable parent objects.
+To be completed, aligning with the claims path pointer used by OpenID4VP and ISO/IEC 18013-5; tracked in [issue #52](https://github.com/openid/dchp/issues/52).
 
-> **Editor's note:** `path` is typed as `[ + tstr ]`, so it cannot currently address individual array elements (the DCQL claims path pointer in OpenID4VP uses `null` and non-negative integers for this). Whether that is needed is tracked in [issue #52](https://github.com/openid/dchp/issues/52).
+In the response, the requested claim is returned by including the Disclosures needed to reveal it, together with those of any selectively disclosable parent objects.
 
 ## Value Matching
 
