@@ -240,6 +240,7 @@ The verifier can optionally authenticate itself using the `reader_auth` field in
 ## Public key authentication ##
 
 This document specifies the following methods to convey the public key used for reader authentication:
+
 - X.509 certificate
 
 Other mechanisms may be used and are out of scope of this document.
