@@ -342,7 +342,7 @@ The `QueryRef` values used in the response are the **same integers** used as key
 
 A single `CredentialItem` may satisfy more than one `CredentialQuery` (e.g. two queries for different elements of the same credential, in different scenarios). In that case the credential is included in the pool once, and all of the satisfied `QueryRef`s are listed in its `query_refs`, rather than the credential being duplicated.
 
-Conversely, a single `CredentialQuery` may be satisfied by more than one `CredentialItem` when `allow_multiple` is set in the query; each such item lists that `QueryRef` in its `query_refs`. When `allow_multiple` is not set, at most one `CredentialItem` in the envelope shall reference a given `QueryRef`.
+A single `CredentialQuery` may be satisfied by more than one `CredentialItem` when `allow_multiple` is set in the query; each such item lists that `QueryRef` in its `query_refs`. When `allow_multiple` is not set, at most one `CredentialItem` in the envelope shall reference a given `QueryRef`.
 
 For each `QueryRef` listed in `scenarios`, at least one `CredentialItem` in the same envelope shall list that `QueryRef` in its `query_refs`.
 
@@ -785,5 +785,6 @@ valuable feedback and contributions to this specification.
 
    -00
 
+   * update credential response to support multiple credentials for a query and multiple queries for a credential.
    * make credential_type an array
    * initial working draft
