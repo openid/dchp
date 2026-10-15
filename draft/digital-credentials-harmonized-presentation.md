@@ -255,7 +255,7 @@ The verifier can optionally authenticate itself using the `reader_auth` field in
 
 The transaction transcript provides a cryptographic context binding across all protocol operations, ensuring that messages from one session cannot be replayed in another, and that the verifier and wallet are bound to the same channel and request.
 
-Because deterministic CBOR encoding (RFC 8949 §4.2) is required throughout this protocol, the transcript is defined as a **CBOR map** rather than a fixed-order array. Deterministic CBOR guarantees a unique canonical byte encoding for any given map value, making it safe to hash or sign over without ambiguity. This is the key difference from the ISO/IEC 18013-5 `SessionTranscript` array, which used a fixed order precisely to achieve the same determinism property.
+Because deterministic CBOR encoding, as specified in [CBOR Encoding](#cbor-encoding), is required throughout this protocol, the transcript is defined as a **CBOR map** rather than a fixed-order array. Deterministic CBOR guarantees a unique canonical byte encoding for any given map value, making it safe to hash or sign over without ambiguity. This is the key difference from the ISO/IEC 18013-5 `SessionTranscript` array, which used a fixed order precisely to achieve the same determinism property.
 
 The transcripts are never transmitted and the verifier and the wallet each construct them independently and shall encode them as specified in [CBOR Encoding](#cbor-encoding), so that both obtain identical byte representations.
 
