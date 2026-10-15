@@ -336,12 +336,12 @@ Each `CredentialItem`:
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `format` | `1` | `tstr` | Credential format identifier of the returned credential, see [Credential Formats](#credential-formats) |
+| `credential_format` | `1` | `tstr` | Credential format identifier of the returned credential, see [Credential Formats](#credential-formats) |
 | `data` | `2` | `$CredentialData` | The credential data; the type is defined by the credential format definition |
 
 ## Credential Data Types
 
-The type and encoding of `data` are defined by the credential format definition for the credential format identified by `format`, see [Credential Formats](#credential-formats).
+The type and encoding of `data` are defined by the credential format definition for the credential format identified by `credential_format`, see [Credential Formats](#credential-formats).
 
 
 
@@ -513,8 +513,8 @@ Envelope = {
 }
 
 CredentialItem = {
-  format:         1 => tstr,
-  data:           2 => $CredentialData,      ; Socket, see below
+  credential_format: 1 => tstr,
+  data:              2 => $CredentialData,   ; Socket, see below
   * int => any                             ; RFU extensions
 }
 
@@ -608,7 +608,7 @@ This annex defines how the protocol specified in this document is used with mdoc
 
 ## Credential Format Identifier
 
-The `credential_format` value for mdocs is `mso_mdoc`. The `format` field of a `CredentialItem` carrying an mdoc has the same value.
+The `credential_format` value for mdocs is `mso_mdoc`.
 
 ## Credential Type
 
@@ -667,7 +667,7 @@ An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-boun
 
 ## Response Structure
 
-A `CredentialItem` carrying an mdoc has `format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure for the presented mdoc.
+A `CredentialItem` carrying an mdoc has `credential_format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure for the presented mdoc.
 
 ```cddl
 $CredentialData /= MdocData
@@ -691,7 +691,7 @@ This annex defines how the protocol specified in this document is used with SD-J
 
 ## Credential Format Identifier
 
-The `credential_format` value for SD-JWT VCs is `dc+sd-jwt`. The `format` field of a `CredentialItem` carrying an SD-JWT VC has the same value.
+The `credential_format` value for SD-JWT VCs is `dc+sd-jwt`.
 
 ## Credential Type
 
@@ -742,7 +742,7 @@ If `support_no_cryptographic_binding` is `false`, the wallet shall present the S
 
 ## Response Structure
 
-A `CredentialItem` carrying an SD-JWT VC has `format` set to `dc+sd-jwt` and `data` set to `SdJwtData`: a text string containing the SD-JWT presentation in its compact serialization, `<Issuer-signed JWT>~<Disclosure 1>~...~<Disclosure N>~<KB-JWT>`. When no KB-JWT is included, the presentation ends with the trailing `~`, as defined in SD-JWT.
+A `CredentialItem` carrying an SD-JWT VC has `credential_format` set to `dc+sd-jwt` and `data` set to `SdJwtData`: a text string containing the SD-JWT presentation in its compact serialization, `<Issuer-signed JWT>~<Disclosure 1>~...~<Disclosure N>~<KB-JWT>`. When no KB-JWT is included, the presentation ends with the trailing `~`, as defined in SD-JWT.
 
 ```cddl
 $CredentialData /= SdJwtData
