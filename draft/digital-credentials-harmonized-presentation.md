@@ -245,7 +245,8 @@ This document specifies the following methods to convey the public key used for 
 
 Other mechanisms may be used and are out of scope of this document.
 
-When using an X.509 certificate to authenticate the reader authentication public key, that certificate shall be included as an x5chain element in the protected header of the COSE_Signature structure. The x5chain element shall contain at least 1 certificate and may contain more. The x5chain element is defined in RFC 9360.
+When using an X.509 certificate to authenticate the reader authentication public key, that certificate shall be included as an x5chain element in the protected header of the COSE_Signature structure whose signature is verified with that public key.
+The x5chain element shall contain at least one certificate, encoded and ordered as specified in RFC 9360. The first certificate shall contain the reader authentication public key.
 
 
 # Transaction Transcript
