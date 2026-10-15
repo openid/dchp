@@ -115,13 +115,13 @@ The `RequestPayload` contains:
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
-| `CredentialQueries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
+| `CredentialQueries` | `2` | `{ + QueryRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
 
 ## Scenario Sets
 
-A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet`s are carried as a map in `RequestPayload`, keyed directly by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
+A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `QueryRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet`s are carried as a map in `RequestPayload`, keyed directly by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -130,7 +130,7 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 | `purpose_id` | `3` | `[ controller_id: tstr, + int ]` | M | Namespaced identifier defining the purpose of the scenario |
 | `extensions` | `4` | `{ * int / tstr => any }` | O | Extensions; `int` keys are RFU, `tstr` keys are application-specific |
 
-- A `CredentialCombination` is an array of `CredentialRef` values — all referenced credentials must be presented (logical **AND**).
+- A `CredentialCombination` is an array of `QueryRef` values — all referenced credentials must be presented (logical **AND**).
 - The wallet need only satisfy **one** combination per ScenarioSet (logical **OR** across combinations).
 
 ## Credential Queries
@@ -320,10 +320,8 @@ An `Envelope` contains a credential pool and a scenario map:
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `credentials` | `1` | `{ + CredentialRef => CredentialItem }` | Pool of all credentials returned in this envelope, keyed by `CredentialRef` (the same integer identifiers used in the request's `CredentialQueries`) |
-| `scenarios` | `2` | `{ + ScenarioRef => [ + CredentialRef ] }` | Maps each satisfied `ScenarioRef` to the list of `CredentialRef`s from the pool that satisfy it |
-
-The `CredentialRef` keys in the pool are the **same integers** used in the request's `CredentialQueries` map, so the verifier can directly correlate a returned credential to the query that requested it without any additional mapping.
+| `credentials` | `1` | `[ + CredentialItem ]` | Pool of all credentials returned in this envelope. Each item declares which `CredentialQuery`s it satisfies via its `query_refs` field |
+| `scenarios` | `2` | `{ + ScenarioRef => [ + QueryRef ] }` | Maps each satisfied `ScenarioRef` to the list of `QueryRef`s that satisfy it |
 
 Each `CredentialItem`:
 
@@ -331,6 +329,15 @@ Each `CredentialItem`:
 |---|---|---|---|
 | `format` | `1` | `tstr` | Credential format identifier of the returned credential, see [Credential Formats](#credential-formats) |
 | `data` | `2` | `$CredentialData` | The credential data; the type is defined by the credential format definition |
+| `query_refs` | `3` | `[ + QueryRef ]` | The `CredentialQuery`s in the request that this credential satisfies |
+
+The `QueryRef` values used in the response are the **same integers** used as keys in the request's `CredentialQueries` map, so the verifier can directly correlate a returned credential to the queries that requested it without any additional mapping.
+
+A single `CredentialItem` may satisfy more than one `CredentialQuery` (e.g. two queries for different elements of the same credential, in different scenarios). In that case the credential is included in the pool once, and all of the satisfied `QueryRef`s are listed in its `query_refs`, rather than the credential being duplicated.
+
+A single `CredentialQuery` may be satisfied by more than one `CredentialItem` when `allow_multiple` is set in the query; each such item lists that `QueryRef` in its `query_refs`. When `allow_multiple` is not set, at most one `CredentialItem` in the envelope shall reference a given `QueryRef`.
+
+For each `QueryRef` listed in `scenarios`, at least one `CredentialItem` in the same envelope shall list that `QueryRef` in its `query_refs`.
 
 ## Credential Data Types
 
@@ -391,14 +398,14 @@ CredentialRequest = {
 
 RequestPayload = {
   ScenarioSets:                     1 => { + ScenarioRef => ScenarioSet },
-  CredentialQueries:                2 => { + CredentialRef => CredentialQuery },
+  CredentialQueries:                2 => { + QueryRef => CredentialQuery },
   ? encryption_context:             3 => EncryptionContext,
   ? additional_encryption_contexts: 4 => { + int => EncryptionContext },
   * int => any                      ; RFU extensions
 }
 
-ScenarioRef   = int
-CredentialRef = int
+ScenarioRef = int
+QueryRef    = int
 
 ; ==========================================
 ; ENCRYPTION PARAMETERS
@@ -423,7 +430,7 @@ ScenarioSet = {
   * int => any                    ; RFU extensions
 }
 
-CredentialCombination = [ + CredentialRef ]
+CredentialCombination = [ + QueryRef ]
 
 ; ==========================================
 ; CREDENTIAL QUERIES & EXTENSIONS
@@ -500,14 +507,15 @@ CredentialResponse = {
 ; Each envelope is self-contained: credentials that must appear in multiple
 ; envelopes are duplicated; no cross-envelope references are permitted.
 Envelope = {
-  credentials:    1 => { + CredentialRef => CredentialItem },
-  scenarios:      2 => { + ScenarioRef   => [ + CredentialRef ] },
+  credentials:    1 => [ + CredentialItem ],
+  scenarios:      2 => { + ScenarioRef => [ + QueryRef ] },
   * int => any                             ; RFU extensions
 }
 
 CredentialItem = {
   format:         1 => tstr,
   data:           2 => $CredentialData,      ; Socket, see below
+  query_refs:     3 => [ + QueryRef ],       ; CredentialQueries in the request this item satisfies
   * int => any                             ; RFU extensions
 }
 
@@ -769,5 +777,5 @@ valuable feedback and contributions to this specification.
    [[ To be removed from the final specification ]]
 
    -00
-
+   * update credential response to support multiple credentials for a query and multiple queries for a credential.
    * initial working draft
