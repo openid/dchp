@@ -140,8 +140,10 @@ A `CredentialQuery` defines the exact credential requirements for one or more cr
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
 
 Listing multiple values in `credential_types` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type).  A request containing a `CredentialQuery` where `credential_types` contains n credential types shall be processed as equivalent to a request in which:
+
 1. That `CredentialQuery` is replaced by n `CredentialQuery` instances, one for each entry of the array, each identical to the original `CredentialQuery` except that its credential_type contains only the corresponding entry.
 2. Each `CredentialCombination` that references that `CredentialQuery`is replaced by n `CredentialCombination`, each identical to the original `CredentialCombination` except that the reference to that `CredentialQuery` is replaced by a reference to a different one of the instances defined in step 1.
+
 The verifier shall ensure that every element in `elements_dict` is defined for each listed credential type.
 If the requirements differ between credential types, the verifier shall use separate `CredentialQuery` entries instead.
 
