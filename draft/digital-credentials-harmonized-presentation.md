@@ -144,9 +144,6 @@ Listing multiple values in `credential_types` is a size optimization for request
 1. That `CredentialQuery` is replaced by n `CredentialQuery` instances, one for each entry of the array, each identical to the original `CredentialQuery` except that its credential_type contains only the corresponding entry.
 2. Each `CredentialCombination` that references that `CredentialQuery`is replaced by n `CredentialCombination`, each identical to the original `CredentialCombination` except that the reference to that `CredentialQuery` is replaced by a reference to a different one of the instances defined in step 1.
 
-The verifier shall ensure that every element in `elements_dict` is defined for each listed credential type.
-If the requirements differ between credential types, the verifier shall use separate `CredentialQuery` entries instead.
-
 ### General Extensions
 
 | Field | Key | Type | Description |
