@@ -179,7 +179,7 @@ The content of `format_extensions` is defined by the credential format definitio
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `path` | `1` | `[ + tstr ]` | M | Path to the element within the credential. How the path maps onto the credential is defined by the credential format definition, see [Credential Formats](#credential-formats) |
+| `path` | `1` | `[ + tstr ]` | M | Path to the element of the credential. How the path maps onto the credential is defined by the credential format definition, see [Credential Formats](#credential-formats) |
 | `value_match` | `2` | `any` | O | Expected value for matching/filtering |
 | `intent_to_retain` | `3` | `bool` | M | Indicates if the verifier intends to store this element |
 
