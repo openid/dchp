@@ -91,11 +91,11 @@ To be completed.
 
 # CBOR Encoding {#cbor-encoding}
 
-All CBOR data items defined in this document shall be encoded in accordance with the core deterministic encoding requirements defined in [RFC 8949, Section 4.2.1](https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1).
+All CBOR data items defined in this document, as well as any extension values embedded directly as CBOR data items, shall be encoded in accordance with the following requirements.
+For CBOR data items encapsulated within a byte string, these requirements only apply when the content of the encapsulated data item is defined in this document:
 
-The floating-point values NaN, Infinity and -Infinity shall not be used.
-
-These requirements do not apply to the content of byte strings that carry structures defined outside this document (e.g. mdoc data structures like `Document` or `DeviceEngagement`). Those external data structures are conveyed and processed as received.
+- The cbor data items shall be encoded in accordance with the core deterministic encoding requirements defined in RFC 8949, Section 4.2.1.
+- Floating-point values like Nan, Infinity and -Infinity shall not be used.
 
 > **Note:** The deterministic serialization defined in draft-ietf-cbor-serialization [2] is the same as RFC 8949, Section 4.2.1 except for the encoding of NaN values, which are not used in this document.
 
