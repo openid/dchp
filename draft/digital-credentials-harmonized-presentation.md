@@ -363,7 +363,7 @@ Credential format definitions for other credential formats may be specified in o
 A credential format definition shall specify:
 
 1. the value of the credential format identifier (`credential_format`);
-2. the content of the credential type field (`credential_type`);
+2. the content of the entries of the credential types field (`credential_types`);
 3. the meaning of the `path` element of a `DataElementDef`, and how it relates to specific fields in the credential and in the response;
 4. how value matching (`value_match`) is performed;
 5. how the issuer identifier request (`issuer_identifiers`) applies;
@@ -612,7 +612,7 @@ The `credential_format` value for mdocs is `mso_mdoc`.
 
 ## Credential Type
 
-`credential_type` contains the mdoc `DocType` (e.g., `org.iso.18013.5.1.mDL`). A `CredentialQuery` with this value matches mdocs whose `docType` is identical to the requested value, compared as text strings; the comparison is case-sensitive.
+Each entry of `credential_types` contains an mdoc `DocType` (e.g., `org.iso.18013.5.1.mDL`). A `CredentialQuery` matches mdocs whose `docType` is identical to one of the requested values, compared as text strings; the comparison is case-sensitive.
 
 ## Path
 
@@ -695,7 +695,7 @@ The `credential_format` value for SD-JWT VCs is `dc+sd-jwt`.
 
 ## Credential Type
 
-`credential_type` contains the value of the `vct` claim of the SD-JWT VC. A `CredentialQuery` with this value matches SD-JWT VCs whose `vct` claim is identical to the requested value, compared as text strings; the comparison is case-sensitive.
+Each entry of `credential_types` contains a value of the `vct` claim of an SD-JWT VC. A `CredentialQuery` matches SD-JWT VCs whose `vct` claim is identical to one of the requested values, compared as text strings; the comparison is case-sensitive.
 
 > **Editor's note:** Whether a `CredentialQuery` also matches SD-JWT VCs whose type inherits from the requested `vct` (as OpenID4VP permits for `vct_values`, following the inheritance logic of SD-JWT VC) has not been decided; tracked in [issue #53](https://github.com/openid/dchp/issues/53).
 
