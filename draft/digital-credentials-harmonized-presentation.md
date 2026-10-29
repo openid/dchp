@@ -106,14 +106,14 @@ The `RequestPayload` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `scenario_sets` | `1` | `{ + ScenarioRef => scenario_set }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
-| `credential_queries` | `2` | `{ + CredentialRef => credential_query }` | M | Dictionary of all requested credential definitions |
+| `scenario_sets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
+| `credential_queries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
 
 ## Scenario Sets
 
-A **scenario_set** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. ScenarioSet structures are carried in the scenario_sets map of RequestPayload, keyed by ScenarioRef, so the scenario_ref field is the map key rather than an item inside the structure.
+A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. 'ScenarioSet' structures are carried in the 'scenario_sets' map of 'RequestPayload', keyed by 'ScenarioRef, so the 'scenario_ref' field is the map key rather than an item inside the structure.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -123,11 +123,11 @@ A **scenario_set** represents an overarching purpose or business context (e.g., 
 | `extensions` | `4` | `{ * int / tstr => any }` | O | Extensions; `int` keys are RFU, `tstr` keys are application-specific |
 
 - A `CredentialCombination` is an array of `CredentialRef` values — all referenced credentials must be presented (logical **AND**).
-- The wallet need only satisfy **one** combination per scenario_set (logical **OR** across combinations).
+- The wallet need only satisfy **one** combination per 'ScenarioSet' (logical **OR** across combinations).
 
 ## Credential Queries
 
-A `credential_query` defines the exact credential requirements for a single credential type.
+A `CredentialQuery` defines the exact credential requirements for a single credential type.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -135,8 +135,8 @@ A `credential_query` defines the exact credential requirements for a single cred
 | `credential_type` | `2` | `tstr` | M | Credential type (e.g., `"org.iso.18013.5.1.mDL"`) |
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
-| `GeneralExtensions` | `5` | `GeneralExtensions` | O | Protocol-level extensions applicable across formats |
-| `FormatExtensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `mdocExtensions`, `sdjwtExtensions`) |
+| `general_extensions` | `5` | `GeneralExtensions` | O | Protocol-level extensions applicable across formats |
+| `format_extensions` | `6` | `FormatExtensions` | O | Format-specific extensions (e.g., `MdocExtensions`, `SdjwtExtensions`) |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
 
 ### General Extensions
@@ -367,8 +367,8 @@ CredentialRequest = {
 }
 
 RequestPayload = {
-  scenario_sets:                     1 => { + ScenarioRef => ScenarioSet },
-  credential_queries:                2 => { + CredentialRef => CredentialQuery },
+  scenario_sets:                    1 => { + ScenarioRef => ScenarioSet },
+  credential_queries:               2 => { + CredentialRef => CredentialQuery },
   ? encryption_context:             3 => EncryptionContext,
   ? additional_encryption_contexts: 4 => { + int => EncryptionContext },
   * int => any                      ; RFU extensions
