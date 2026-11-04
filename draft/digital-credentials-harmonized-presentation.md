@@ -106,14 +106,14 @@ The `RequestPayload` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
-| `CredentialQueries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
+| `scenario_sets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
+| `credential_queries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
 
 ## Scenario Sets
 
-A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet`s are carried as a map in `RequestPayload`, keyed directly by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
+A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet` structures are carried in the `scenario_sets` map of `RequestPayload`, keyed by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -123,7 +123,7 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 | `extensions` | `4` | `{ * int / tstr => any }` | O | Extensions; `int` keys are RFU, `tstr` keys are application-specific |
 
 - A `CredentialCombination` is an array of `CredentialRef` values — all referenced credentials must be presented (logical **AND**).
-- The wallet need only satisfy **one** combination per ScenarioSet (logical **OR** across combinations).
+- The wallet need only satisfy **one** combination per `ScenarioSet` (logical **OR** across combinations).
 
 ## Credential Queries
 
@@ -135,8 +135,8 @@ A `CredentialQuery` defines the exact credential requirements for one or more cr
 | `credential_types` | `2` | `[ + tstr ]` | M | Acceptable credential types (e.g., `["org.iso.18013.5.1.mDL"]`) |
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
-| `general_extensions` | `5` | `generalExtensions` | O | Protocol-level extensions applicable across formats |
-| `format_extensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `mdocExtensions`, `sdjwtExtensions`) |
+| `general_extensions` | `5` | `GeneralExtensions` | O | Protocol-level extensions applicable across formats |
+| `format_extensions` | `6` | `FormatExtensions` | O | Format-specific extensions (e.g., `MdocExtensions`, `SdJwtExtensions`) |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
 
 Listing multiple values in `credential_types` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type).  A request containing a `CredentialQuery` where `credential_types` contains n credential types shall be processed as equivalent to a request in which:
@@ -155,7 +155,7 @@ Listing multiple values in `credential_types` is a size optimization for request
 
 ### Format-Specific Extensions
 
-**`mdocExtensions`:**
+**`MdocExtensions`:**
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -164,12 +164,12 @@ Listing multiple values in `credential_types` is a size optimization for request
 
 > **Note:** A verifier that has no constraint on one of the two algorithm classes should include the field with a permissive list of acceptable values rather than omitting it.
 
-**`sdjwtExtensions`:**
+**`SdJwtExtensions`:**
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `sd-jwt_alg_values` | `1` | `[ + tstr ]` | O | Acceptable SD-JWT algorithm values |
-| `kb-jwt_alg_values` | `2` | `[ + tstr ]` | O | Acceptable Key Binding JWT algorithm values |
+| `sd_jwt_alg_values` | `1` | `[ + tstr ]` | O | Acceptable SD-JWT algorithm values |
+| `kb_jwt_alg_values` | `2` | `[ + tstr ]` | O | Acceptable Key Binding JWT algorithm values |
 
 ### Issuer Identifiers
 
@@ -332,10 +332,10 @@ An `Envelope` contains a credential pool and a scenario map:
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `credentials` | `1` | `{ + CredentialRef => CredentialItem }` | Pool of all credentials returned in this envelope, keyed by `CredentialRef` (the same integer identifiers used in the request's `CredentialQueries`) |
+| `credentials` | `1` | `{ + CredentialRef => CredentialItem }` | Pool of all credentials returned in this envelope, keyed by `CredentialRef` (the same integer identifiers used in the request's `credential_queries`) |
 | `scenarios` | `2` | `{ + ScenarioRef => [ + CredentialRef ] }` | Maps each satisfied `ScenarioRef` to the list of `CredentialRef`s from the pool that satisfy it |
 
-The `CredentialRef` keys in the pool are the **same integers** used in the request's `CredentialQueries` map, so the verifier can directly correlate a returned credential to the query that requested it without any additional mapping.
+The `CredentialRef` keys in the pool are the **same integers** used in the request's `credential_queries` map, so the verifier can directly correlate a returned credential to the query that requested it without any additional mapping.
 
 Each `CredentialItem`:
 
@@ -372,8 +372,8 @@ CredentialRequest = {
 }
 
 RequestPayload = {
-  ScenarioSets:                     1 => { + ScenarioRef => ScenarioSet },
-  CredentialQueries:                2 => { + CredentialRef => CredentialQuery },
+  scenario_sets:                    1 => { + ScenarioRef => ScenarioSet },
+  credential_queries:               2 => { + CredentialRef => CredentialQuery },
   ? encryption_context:             3 => EncryptionContext,
   ? additional_encryption_contexts: 4 => { + int => EncryptionContext },
   * int => any                      ; RFU extensions
@@ -416,13 +416,13 @@ CredentialQuery = {
   credential_types:     2 => [ + tstr ],
   elements_dict:        3 => { + ElementRef => DataElementDef },
   requested_elements:   4 => ElementLogic,
-  ? general_extensions: 5 => generalExtensions,
-  ? format_extensions:  6 => formatExtensions,
+  ? general_extensions: 5 => GeneralExtensions,
+  ? format_extensions:  6 => FormatExtensions,
   ? encryption_ref:     7 => int,   ; Key into additional_encryption_contexts; absent = use main
   * int => any                      ; RFU extensions
 }
 
-generalExtensions = {
+GeneralExtensions = {
   ? issuer_identifiers:               1 => IssuerIdentifiers,
   ? allow_multiple:                   2 => bool,
   ? credential_auth_data:             3 => { + int / tstr => any },
@@ -430,17 +430,17 @@ generalExtensions = {
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-formatExtensions = mdocExtensions / sdjwtExtensions / zkFormatExtensions
+FormatExtensions = MdocExtensions / SdJwtExtensions / ZkFormatExtensions
 
-mdocExtensions = {
+MdocExtensions = {
   ? issuer_alg_values: 1 => [ + int ],
   ? device_alg_values: 2 => [ + int ],
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-sdjwtExtensions = {
-  ? sd-jwt_alg_values: 1 => [ + tstr ],
-  ? kb-jwt_alg_values: 2 => [ + tstr ],
+SdJwtExtensions = {
+  ? sd_jwt_alg_values: 1 => [ + tstr ],
+  ? kb_jwt_alg_values: 2 => [ + tstr ],
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
