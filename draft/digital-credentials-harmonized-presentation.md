@@ -87,7 +87,12 @@ To be completed.
 
 # Symbols and abbreviated terms
 
-To be completed.
+| Abbreviation / Symbol | Description |
+| :--- | :--- |
+| M | Mandatory |
+| C | Conditional |
+| O | Optional |
+
 # Credential Request
 > This section does not yet have working group consensus, which is tracked in [issue #24](https://github.com/openid/dchp/issues/24).
 
