@@ -259,7 +259,7 @@ Both share the same base fields; they differ in whether an encryption context re
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `request_hash` | `1` | `bstr` | M | SHA-256 of the CBOR-encoded `RequestPayload` bytes |
-| `channel_binding` | `2` | `ChannelBinding` | M | Transport- and engagement-specific binding; see channel binding |
+| `channel_binding` | `2` | `ChannelBinding` | M | Transport- and engagement-specific binding; see [Channel Binding](#channel-binding) |
 
 ## WalletTransactionTranscript
 
@@ -286,7 +286,7 @@ These fields capture how the credential request was initiated (device engagement
 | `nfc_static_handover_engagement` | `3` | `bstr` | 18013-5 NFC static | Handover select message from NFC static handover |
 | `nfc_negotiated_handover_engagement` | `4` | `bstr` | 18013-5 NFC negotiated | Handover select and response message from NFC negotiated handover |
 | `cce_handover` | `5` | `bstr` | CCE | CBOR-encoded `DeviceEngagement` and `ReaderEngagement` structures from CCE handover |
-| `openid4vp_request_uri` | `6` | `tstr` | OpenID4VP | The `request_uri` value from the OID4VP authorization request |
+| `openid4vp_request_uri` | `6` | `tstr` | OpenID4VP | The `request_uri` value from the OpenID4VP authorization request |
 | `openid4vp_client_id` | `7` | `tstr` | OpenID4VP | The `client_id` from the OpenID4VP authorization request |
 | `dc_api_origin` | `8` | `tstr` | DC API | Web origin (`scheme://host[:port]`) of the page invoking the Digital Credentials API |
 
@@ -521,7 +521,7 @@ CredentialItem = {
 
 
 
-*External type references: `COSE_Sign`, `COSE_Key`, `COSE_Encrypt` — defined in [RFC 9052](https://www.rfc-editor.org/rfc/rfc9052) (COSE); `COSE_X509` — defined in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360); `full-date` — defined in [RFC 8943](https://www.rfc-editor.org/rfc/rfc8943) (CBOR Tags for Date).*
+*External type references: `COSE_Sign`, `COSE_Key`, `COSE_Encrypt` — defined in [RFC 9052](https://www.rfc-editor.org/rfc/rfc9052) (COSE); `COSE_X509` — defined in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360).*
 
 ## Transaction Transcript CDDL
 
@@ -560,7 +560,7 @@ ChannelBinding = {
   ? reverse_qr_device_engagement:       2 => bstr,  ; 18013-5 Reverse QR:      CBOR-encoded DeviceEngagement
   ? nfc_static_handover_engagement:     3 => bstr,  ; 18013-5 NFC static:      CBOR-encoded DeviceEngagement
   ? nfc_negotiated_handover_engagement: 4 => bstr,  ; 18013-5 NFC negotiated:  CBOR-encoded DeviceEngagement
-  ? cce_handover:                     5 => bstr,  ; CCE:                   CBOR-encoded DeviceEngagement and ReaderEngagement
+  ? cce_handover:                       5 => bstr,  ; CCE:                     CBOR-encoded DeviceEngagement and ReaderEngagement
   ? openid4vp_request_uri:              6 => tstr,  ; OpenID4VP:               request_uri from the authorization request
   ? openid4vp_client_id:                7 => tstr,  ; OpenID4VP:               client_id from the authorization request
   ? dc_api_origin:                      8 => tstr,  ; DC API:                  web origin (scheme://host[:port])
@@ -574,7 +574,7 @@ ChannelBinding = {
                                  },
   ? nfc_static_handover:      12 => bstr,           ; 18013-5 NFC static:      CBOR-encoded NFCHandover
   ? nfc_negotiated_handover:  13 => bstr,           ; 18013-5 NFC negotiated:  CBOR-encoded NFCHandover
-  ? cce:                      14 => bstr,           ; CCE:               CCE (previously called NFC v2)  transmission data
+  ? cce:                      14 => bstr,           ; CCE:                     CCE (previously called NFC v2) transmission data
   ? wifi_aware:               15 => bstr,           ; 18013-5 WiFi Aware:      engagement data
 
   * (int / tstr) => any                             ; RFU / application-specific extensions
