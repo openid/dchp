@@ -340,7 +340,7 @@ Each `CredentialItem`:
 
 The `QueryRef` values used in the response are the **same integers** used as keys in the request's `CredentialQueries` map, so the verifier can directly correlate a returned credential to the queries that requested it without any additional mapping.
 
-A single `CredentialItem` may satisfy more than one `CredentialQuery` (e.g. two queries for different elements of the same credential, in different scenarios). In that case the credential is included in the pool once, and all of the satisfied `QueryRef`s are listed in its `query_refs`, rather than the credential being duplicated.
+A single `CredentialItem` may satisfy more than one `CredentialQuery` (e.g. two queries for different elements of the same credential, in different scenarios). In that case the credential should be included in the pool once, and all of the satisfied `QueryRef`s are listed in its `query_refs`, rather than the credential being duplicated.
 
 A single `CredentialQuery` may be satisfied by more than one `CredentialItem` when `allow_multiple` is set in the query; each such item lists that `QueryRef` in its `query_refs`. When `allow_multiple` is not set, at most one `CredentialItem` in the envelope shall reference a given `QueryRef`.
 
