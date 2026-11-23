@@ -71,6 +71,16 @@ To be completed.
 The following documents are referred to in the text in such a way that some or
 all of their content constitutes requirements of this document.
 
+ISO/IEC 18013-5, *Personal identification — ISO-compliant driving licence — Part 5: Mobile driving licence (mDL) application*
+
+IETF RFC 5280, *Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile*, <https://www.rfc-editor.org/rfc/rfc5280>
+
+IETF RFC 7515, *JSON Web Signature (JWS)*, <https://www.rfc-editor.org/rfc/rfc7515>
+
+IETF RFC 9901, *Selective Disclosure for JSON Web Tokens*, <https://www.rfc-editor.org/rfc/rfc9901>
+
+IETF draft-ietf-oauth-sd-jwt-vc, *SD-JWT-based Verifiable Digital Credentials (SD-JWT VC)*, <https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/>
+
 To be completed.
 
 # Terms and definitions
@@ -87,11 +97,16 @@ To be completed.
 
 # Symbols and abbreviated terms
 
-To be completed.
+| Abbreviation / Symbol | Description |
+| :--- | :--- |
+| M | Mandatory |
+| C | Conditional |
+| O | Optional |
+
 # Credential Request
 > This section does not yet have working group consensus, which is tracked in [issue #24](https://github.com/openid/dchp/issues/24).
 
-The request is sent by the **verifier** (reader) to the **wallet** (holder).
+The request is sent by the **verifier** to the **wallet** (holder).
 
 ## Request Structure
 
@@ -100,13 +115,13 @@ The top-level `CredentialRequest` contains:
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `payload` | `1` | `bytes` | M | CBOR-encoded `RequestPayload` |
-| `reader_auth` | `2` | `COSE_Sign` | O | Optional reader authentication signature |
+| `verifier_auth` | `2` | `COSE_Sign` | O | Optional verifier authentication signature |
 
 The `RequestPayload` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
+| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the verifier is requesting, keyed by `ScenarioRef` |
 | `CredentialQueries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
@@ -127,17 +142,22 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 
 ## Credential Queries
 
-A `CredentialQuery` defines the exact credential requirements for a single credential type.
+A `CredentialQuery` defines the exact credential requirements for one or more credential types.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `credential_format` | `1` | `tstr` | M | Format identifier (e.g., `"mso_mdoc"`, `"vc+sd-jwt"`) |
-| `credential_type` | `2` | `tstr` | M | Credential type (e.g., `"org.iso.18013.5.1.mDL"`) |
+| `credential_format` | `1` | `tstr` | M | Credential format identifier (e.g., `"mso_mdoc"`, `"dc+sd-jwt"`). The value is defined by the credential format definition, see [Credential Formats](#credential-formats) |
+| `credential_types` | `2` | `[ + tstr ]` | M | Acceptable credential types (e.g., `["org.iso.18013.5.1.mDL"]`). The content is defined by the credential format definition |
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
 | `general_extensions` | `5` | `generalExtensions` | O | Protocol-level extensions applicable across formats |
-| `format_extensions` | `6` | `formatExtensions` | O | Format-specific extensions (e.g., `mdocExtensions`, `sdjwtExtensions`) |
+| `format_extensions` | `6` | `$formatExtensions` | O | Format-specific extensions. The content is defined by the credential format definition |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
+
+Listing multiple values in `credential_types` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type).  A request containing a `CredentialQuery` where `credential_types` contains n credential types shall be processed as equivalent to a request in which:
+
+1. That `CredentialQuery` is replaced by n `CredentialQuery` instances, one for each entry of the array, each identical to the original `CredentialQuery` except that its credential_type contains only the corresponding entry.
+2. Each `CredentialCombination` that references that `CredentialQuery`is replaced by n `CredentialCombination`, each identical to the original `CredentialCombination` except that the reference to that `CredentialQuery` is replaced by a reference to a different one of the instances defined in step 1.
 
 ### General Extensions
 
@@ -146,25 +166,11 @@ A `CredentialQuery` defines the exact credential requirements for a single crede
 | `issuer_identifiers` | `1` | `IssuerIdentifiers` | Acceptable credential issuers (e.g., X.509 certificate references) |
 | `allow_multiple` | `2` | `bool` | Allow returning multiple credentials of the same type |
 | `credential_auth_data` | `3` | `{ + int / tstr => any }` | Data to be authenticated/signed by the credential presentation |
-| `support_no_cryptographic_binding` | `4` | `bool` | Indicates if the reader accepts responses without cryptographic binding |
+| `support_no_cryptographic_binding` | `4` | `bool` | Indicates if the verifier accepts responses without cryptographic binding |
 
 ### Format-Specific Extensions
 
-**`mdocExtensions`:**
-
-| Field | Key | Type | Presence | Description |
-|---|---|---|---|---|
-| `issuer_alg_values` | `1` | `[ + int ]` | O | Acceptable issuer signature algorithm identifiers |
-| `device_alg_values` | `2` | `[ + int ]` | O | Acceptable device signature algorithm identifiers |
-
-> **Note:** A verifier that has no constraint on one of the two algorithm classes should include the field with a permissive list of acceptable values rather than omitting it.
-
-**`sdjwtExtensions`:**
-
-| Field | Key | Type | Presence | Description |
-|---|---|---|---|---|
-| `sd-jwt_alg_values` | `1` | `[ + tstr ]` | O | Acceptable SD-JWT algorithm values |
-| `kb-jwt_alg_values` | `2` | `[ + tstr ]` | O | Acceptable Key Binding JWT algorithm values |
+The content of `format_extensions` is defined by the credential format definition for the credential format identified by `credential_format`, see [Credential Formats](#credential-formats).
 
 ### Issuer Identifiers
 
@@ -178,7 +184,7 @@ A `CredentialQuery` defines the exact credential requirements for a single crede
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `path` | `1` | `[ + tstr ]` | M | Path to the element. For mdocs: `[namespace, identifier]` |
+| `path` | `1` | `[ + tstr ]` | M | Path to the element of the credential. How the path maps onto the credential is defined by the credential format definition, see [Credential Formats](#credential-formats) |
 | `value_match` | `2` | `any` | O | Expected value for matching/filtering |
 | `intent_to_retain` | `3` | `bool` | M | Indicates if the verifier intends to store this element |
 
@@ -218,7 +224,7 @@ The request defines a primary `encryption_context` and optionally additional con
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `key` | `1` | `COSE_Key` | The reader's public key (e.g., HPKE key) |
+| `key` | `1` | `COSE_Key` | The verifier's public key (e.g., HPKE key) |
 | `nonce` | `2` | `bstr` | Nonce value |
 | `algorithms` | `3` | `[ + int ]` | Supported COSE algorithm identifiers (e.g., HPKE ciphersuites) |
 
@@ -227,11 +233,11 @@ The request defines a primary `encryption_context` and optionally additional con
 For non-post-quantum-cryptography (non-PQC) operations, **HPKE** is mandated, potentially based on [draft-ietf-cose-hpke](https://datatracker.ietf.org/doc/draft-ietf-cose-hpke/).
 
 
-# Reader Authentication
+# Verifier Authentication
 
 > This section does not yet have working group consensus, which is tracked in [issue #26](https://github.com/openid/dchp/issues/26).
 
-The verifier can optionally authenticate itself using the `reader_auth` field in the top-level `CredentialRequest`.
+The verifier can optionally authenticate itself using the `verifier_auth` field in the top-level `CredentialRequest`.
 
 - **Structure:** Uses a standard `COSE_Sign` structure.
 - **Payload:** The signature uses a **detached payload**.
@@ -249,7 +255,7 @@ When using an X.509 certificate to convey the reader authentication public key, 
 The x5chain element shall contain at least one certificate, encoded and ordered as specified in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360). The first certificate shall contain the reader authentication public key.
 
 
-# Transaction Transcript
+# Transaction Transcript {#transaction-transcript}
 
 > This section does not yet have working group consensus, which is tracked in [issue #27](https://github.com/openid/dchp/issues/27).
 
@@ -259,12 +265,12 @@ Because deterministic CBOR encoding (RFC 8949 §4.2) is required throughout this
 
 Two transcript types are defined:
 
-- **`ReaderTransactionTranscript`** — constructed by the **verifier** and used in reader authentication and response encryption.
+- **`VerifierTransactionTranscript`** — constructed by the **verifier** and used in verifier authentication and response encryption.
 - **`WalletTransactionTranscript`** — constructed by the **wallet** for credential authentication. It includes the applicable encryption context reference for the credential being presented, or no encryption context if the credential is unencrypted.
 
 Both share the same base fields; they differ in whether an encryption context reference is present.
 
-## ReaderTransactionTranscript
+## VerifierTransactionTranscript
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -275,8 +281,8 @@ Both share the same base fields; they differ in whether an encryption context re
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `request_hash` | `1` | `bstr` | M | SHA-256 of the CBOR-encoded `RequestPayload` bytes — identical value to the reader transcript |
-| `channel_binding` | `2` | `ChannelBinding` | M | Identical to the reader transcript |
+| `request_hash` | `1` | `bstr` | M | SHA-256 of the CBOR-encoded `RequestPayload` bytes — identical value to the verifier transcript |
+| `channel_binding` | `2` | `ChannelBinding` | M | Identical to the verifier transcript |
 | `encryption_context` | `3` | `int` | O | The `encryption_ref` value from the `CredentialQuery` for this credential; absent when no application-layer encryption is used |
 
 The wallet determines the applicable value from `CredentialQuery.encryption_ref`: if present, it is copied directly into this field; if absent, the field is omitted (indicating the main `encryption_context` is used or no application-layer encryption applies).
@@ -314,10 +320,9 @@ These fields capture the data-transport channel over which the credential presen
 
 | Operation | Transcript used | How it is bound |
 |---|---|---|
-| **Reader authentication** | `ReaderTransactionTranscript` | Combined with the `RequestPayload` bytes as the detached COSE_Sign payload |
+| **Verifier authentication** | `VerifierTransactionTranscript` | Combined with the `RequestPayload` bytes as the detached COSE_Sign payload |
 | **Response encryption** | `WalletTransactionTranscript` for that credential | Supplied as info parameter for HPKE |
-| **mdoc device authentication** | `WalletTransactionTranscript` for that credential | Embedded in a derived `SessionTranscript`; see §5.5 |
-| **SD-JWT Key Binding JWT** | `WalletTransactionTranscript` for that credential | SHA-256 of the CBOR-encoded transcript used as the `nonce` claim in the KB-JWT |
+| **Credential authentication** (cryptographic binding) | `WalletTransactionTranscript` for that credential | As defined by the credential format definition, see [Credential Formats](#credential-formats) |
 | **Session key derivation** (BLE/NFC) | `WalletTransactionTranscript` (no encryption context) | Used as an input to the session key derivation function |
 
 
@@ -347,22 +352,52 @@ Each `CredentialItem`:
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `format` | `1` | `tstr` | The format of the returned credential |
-| `data` | `2` | `Document / ZkDocument / SdJwtData` | The credential data payload |
+| `credential_format` | `1` | `tstr` | Credential format identifier of the returned credential, see [Credential Formats](#credential-formats) |
+| `data` | `2` | `$CredentialData` | The credential data; the type is defined by the credential format definition |
 
 ## Credential Data Types
 
-| Type | Encoding | Description |
+The type and encoding of `data` are defined by the credential format definition for the credential format identified by `credential_format`, see [Credential Formats](#credential-formats).
+
+
+
+# Credential Formats {#credential-formats}
+
+The protocol defined in this document supports multiple credential formats. [Requirements on Credential Format Definitions](#format-definition-requirements) specify which parts of the protocol depend on the credential format.
+
+This document contains credential format definitions for the following credential formats:
+
+| `credential_format` | Credential format | Credential format definition |
 |---|---|---|
-| `Document` | `bstr` | Standard mdoc presentation (aligns with ISO/IEC 18013-5 `Document` structure) |
-| `SdJwtData` | `tstr` | SD-JWT combined presentation string |
+| `mso_mdoc` | ISO mdoc, as defined in ISO/IEC 18013-5 | [ISO mdoc Credential Format](#annex-mdoc) |
+| `dc+sd-jwt` | SD-JWT VC, as defined in draft-ietf-oauth-sd-jwt-vc | [SD-JWT VC Credential Format](#annex-sd-jwt-vc) |
 
+Credential format definitions for other credential formats may be specified in other documents.
 
+## Requirements on Credential Format Definitions {#format-definition-requirements}
 
-# CDDL Definitions
+A credential format definition shall specify:
 
-> CBOR data definitions use [CDDL (RFC 8610)](https://www.rfc-editor.org/rfc/rfc8610).  
+1. the value of the credential format identifier (`credential_format`);
+2. the content of the entries of the credential types field (`credential_types`);
+3. the meaning of the `path` element of a `DataElementDef`, and how it relates to specific fields in the credential and in the response;
+4. how value matching (`value_match`) is performed;
+5. how the issuer identifier request (`issuer_identifiers`) applies;
+6. any format-specific extensions (`format_extensions`), for example cryptographic algorithm values;
+7. how the cryptographic binding parameter request (`support_no_cryptographic_binding`) applies;
+8. the structure of the credential data (`data`) returned in the response for this format;
+9. how the transaction data request (`credential_auth_data`) applies for this format;
+10. how the `WalletTransactionTranscript` is included in the cryptographic binding of the response.
+
+A credential format definition extends the `$formatExtensions` and `$CredentialData` CDDL sockets defined in [CDDL Definitions](#cddl-definitions) with the types it defines for `format_extensions` and `data`.
+
+# CDDL Definitions {#cddl-definitions}
+
+> CBOR data definitions use [CDDL (RFC 8610)](https://www.rfc-editor.org/rfc/rfc8610).
+>
 > External references: `COSE_Sign`, `COSE_Key`, `COSE_Encrypt` are defined in [RFC 9052](https://www.rfc-editor.org/rfc/rfc9052).
+>
+> `$formatExtensions` and `$CredentialData` are sockets (RFC 8610, Section 3.9) that each credential format definition extends, see [Credential Formats](#credential-formats).
 
 ## Request CDDL
 
@@ -372,9 +407,9 @@ Each `CredentialItem`:
 ; ==========================================
 
 CredentialRequest = {
-  payload:        1 => bstr,      ; CBOR-encoded RequestPayload
-  ? reader_auth:  2 => COSE_Sign, ; Optional reader authentication (detached payload)
-  * int => any                    ; RFU extensions
+  payload:         1 => bstr,      ; CBOR-encoded RequestPayload
+  ? verifier_auth: 2 => COSE_Sign, ; Optional verifier authentication (detached payload)
+  * int => any                     ; RFU extensions
 }
 
 RequestPayload = {
@@ -419,11 +454,11 @@ CredentialCombination = [ + CredentialRef ]
 
 CredentialQuery = {
   credential_format:    1 => tstr,
-  credential_type:      2 => tstr,
+  credential_types:     2 => [ + tstr ],
   elements_dict:        3 => { + ElementRef => DataElementDef },
   requested_elements:   4 => ElementLogic,
   ? general_extensions: 5 => generalExtensions,
-  ? format_extensions:  6 => formatExtensions,
+  ? format_extensions:  6 => $formatExtensions, ; Socket, see below
   ? encryption_ref:     7 => int,   ; Key into additional_encryption_contexts; absent = use main
   * int => any                      ; RFU extensions
 }
@@ -436,19 +471,9 @@ generalExtensions = {
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-formatExtensions = mdocExtensions / sdjwtExtensions / zkFormatExtensions
-
-mdocExtensions = {
-  ? issuer_alg_values: 1 => [ + int ],
-  ? device_alg_values: 2 => [ + int ],
-  * int / tstr => any             ; int = RFU, tstr = application-specific
-}
-
-sdjwtExtensions = {
-  ? sd-jwt_alg_values: 1 => [ + tstr ],
-  ? kb-jwt_alg_values: 2 => [ + tstr ],
-  * int / tstr => any             ; int = RFU, tstr = application-specific
-}
+; $formatExtensions is a socket (RFC 8610, Section 3.9): each credential
+; format definition adds its own extensions structure to it, e.g.
+;   $formatExtensions /= mdocExtensions
 
 IssuerIdentifiers = {
   ? x509_ref: 1 => [ + bstr ],
@@ -504,20 +529,17 @@ Envelope = {
 }
 
 CredentialItem = {
-  format:         1 => tstr,
-  data:           2 => Document / ZkDocument / SdJwtData,
+  credential_format: 1 => tstr,
+  data:              2 => $CredentialData,   ; Socket, see below
   * int => any                             ; RFU extensions
 }
 
 ; ==========================================
 ; FORMAT-SPECIFIC DATA
+; $CredentialData is a socket (RFC 8610, Section 3.9): each credential
+; format definition adds the type of its credential data to it, e.g.
+;   $CredentialData /= MdocData
 ; ==========================================
-
-Document = bstr   ; ISO/IEC 18013-5 Document structure
-
-NameSpace = tstr
-
-SdJwtData = tstr   ; SD-JWT combined presentation string
 ```
 
 
@@ -532,17 +554,17 @@ SdJwtData = tstr   ; SD-JWT combined presentation string
 ; Deterministic CBOR encoding (RFC 8949 §4.2) is REQUIRED for all transcript values.
 ; ==========================================
 
-; Used by the verifier: for reader authentication and as info parameter for response encryption.
-ReaderTransactionTranscript = {
+; Used by the verifier: for verifier authentication and as info parameter for response encryption.
+VerifierTransactionTranscript = {
   request_hash:    1 => bstr,          ; SHA-256 of CBOR-encoded RequestPayload bytes
   channel_binding: 2 => ChannelBinding,
   * int / tstr => any                  ; RFU / application-specific extensions
 }
 
-; Used by the wallet: for mdoc device authentication, SD-JWT KB-JWT nonce, and response encryption.
+; Used by the wallet: for credential authentication (as defined by the credential format definition) and response encryption.
 ; Includes the encryption_ref from the CredentialQuery for the credential being presented.
 WalletTransactionTranscript = {
-  request_hash:         1 => bstr,          ; Same value as in ReaderTransactionTranscript
+  request_hash:         1 => bstr,          ; Same value as in VerifierTransactionTranscript
   channel_binding:      2 => ChannelBinding,
   ? encryption_context: 3 => int,           ; The encryption_ref from CredentialQuery;
                                             ; absent when no application-layer encryption is used
@@ -569,7 +591,7 @@ ChannelBinding = {
   ; Capture the data-transport channel over which the presentation is performed.
   ? ble_uuid:                 10 => bstr,           ; 18013-5 BLE (UUID):      EReaderKey bytes
   ? ble_l2cap:                11 => {               ; 18013-5 BLE L2CAP:       EReaderKey + PSM
-                                   uuid: 1 => bstr, ;   Reader ephemeral public key
+                                   uuid: 1 => bstr, ;   Verifier ephemeral public key
                                    psm:  2 => uint  ;   L2CAP Protocol/Service Multiplexer value
                                  },
   ? nfc_static_handover:      12 => bstr,           ; 18013-5 NFC static:      CBOR-encoded NFCHandover
@@ -596,6 +618,165 @@ Clause 7 (see <https://www.iso.org/directives-and-policies.html>).
 
 {backmatter}
 
+# ISO mdoc Credential Format {#annex-mdoc}
+
+This annex defines how the protocol specified in this document is used with mdocs as defined in ISO/IEC 18013-5. It does not redefine the mdoc format: the structures referred to in this annex (`DocType`, `NameSpace`, `DataElementIdentifier`, `IssuerNameSpaces`, `IssuerSignedItem`, `IssuerSigned`, `IssuerAuth`, `MobileSecurityObject` (MSO), `KeyAuthorizations`, `DeviceNameSpaces`, `DeviceSignedItems`, `DeviceSigned`, `DeviceAuth`, `DeviceAuthentication`, `DeviceKeyInfo`, `SessionTranscript` and `Document`) are defined in ISO/IEC 18013-5.
+
+## Credential Format Identifier
+
+The `credential_format` value for mdocs is `mso_mdoc`.
+
+## Credential Type
+
+Each entry of `credential_types` contains an mdoc `DocType` (e.g., `org.iso.18013.5.1.mDL`). A `CredentialQuery` matches mdocs whose `docType` is identical to one of the requested values, compared as text strings; the comparison is case-sensitive.
+
+## Path
+
+The `path` of a `DataElementDef` has exactly two elements: the `NameSpace` and the `DataElementIdentifier` of the requested data element, in that order, e.g., `["org.iso.18013.5.1", "family_name"]`. In the response, the requested data element is returned under that namespace in the `Document`, either as an `IssuerSignedItem` in `IssuerNameSpaces` or in `DeviceSignedItems` in `DeviceNameSpaces`, as defined in ISO/IEC 18013-5. Which of the two is used is determined by the wallet, subject to the `KeyAuthorizations` granted by the issuing authority in the MSO; the verifier validates this as part of mdoc authentication, as defined in ISO/IEC 18013-5. Where the definition of a data element specifies that a request for it may be answered with a different data element (e.g., the `age_over_NN` age attestations defined in ISO/IEC 18013-5 and ISO/IEC TS 23220-2), the wallet may return that data element instead, as specified in that definition.
+
+```cddl
+; An mdoc DataElementDef.path is [ NameSpace, DataElementIdentifier ]
+NameSpace             = tstr   ; as defined in ISO/IEC 18013-5
+DataElementIdentifier = tstr   ; as defined in ISO/IEC 18013-5
+```
+
+## Value Matching
+
+To be completed; tracked in [issue #9](https://github.com/openid/dchp/issues/9).
+
+## Issuer Identifiers
+
+An mdoc satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the `keyIdentifier` field of the Authority Key Identifier extension (RFC 5280) of one of the certificates in the `x5chain` element of the `IssuerAuth` header of the mdoc.
+
+> **Note:** A verifier that includes the subject key identifier of the certificate it uses to verify mdocs from a particular issuer (e.g., the IACA certificate) will match the authority key identifier of one of the certificates in the `x5chain`.
+
+> **Editor's note:** This is the same rule as the `IssuerIdentifiers` structure being defined in the second edition of ISO/IEC 18013-5.
+
+## Format-Specific Extensions
+
+For mdocs, `format_extensions` contains an `mdocExtensions` map:
+
+| Field | Key | Type | Presence | Description |
+|---|---|---|---|---|
+| `issuer_alg_values` | `1` | `[ + int ]` | O | Acceptable issuer signature algorithm identifiers |
+| `device_alg_values` | `2` | `[ + int ]` | O | Acceptable device signature algorithm identifiers |
+
+> **Note:** A verifier that has no constraint on one of the two algorithm classes should include the field with a permissive list of acceptable values rather than omitting it.
+
+```cddl
+$formatExtensions /= mdocExtensions
+
+mdocExtensions = {
+  ? issuer_alg_values: 1 => [ + int ],   ; COSE algorithm identifiers
+  ? device_alg_values: 2 => [ + int ],   ; COSE algorithm identifiers
+  * int / tstr => any             ; int = RFU, tstr = application-specific
+}
+```
+
+## Cryptographic Binding
+
+Cryptographic binding for mdocs is mdoc authentication: the `DeviceAuth` structure in `DeviceSigned`, produced with the device key in the `DeviceKeyInfo` structure of the MSO, as defined in ISO/IEC 18013-5.
+
+An mdoc whose MSO does not contain a `DeviceKeyInfo` structure is a non-key-bound mdoc: its `Document` contains no `DeviceSigned` structure and mdoc authentication does not apply to it. If `support_no_cryptographic_binding` is `true`, the wallet may return a non-key-bound mdoc; otherwise, the wallet shall not return a non-key-bound mdoc.
+
+> **Editor's note:** Non-key-bound mdocs are introduced by the second edition of ISO/IEC 18013-5. The text above follows the changes proposed for its DIS ballot and is to be checked against the published text; tracked in [issue #56](https://github.com/openid/dchp/issues/56).
+
+## Response Structure
+
+A `CredentialItem` carrying an mdoc has `credential_format` set to `mso_mdoc` and `data` set to `MdocData`: a byte string containing the CBOR-encoded ISO/IEC 18013-5 `Document` structure for the presented mdoc.
+
+```cddl
+$CredentialData /= MdocData
+
+MdocData = bstr .cbor Document   ; Document is defined in ISO/IEC 18013-5
+```
+
+## Transaction Data
+
+To be completed; tracked in [issue #4](https://github.com/openid/dchp/issues/4).
+
+## Transaction Transcript
+
+The `WalletTransactionTranscript` for the credential (see [Transaction Transcript](#transaction-transcript)) is bound into mdoc authentication: it is embedded in the `SessionTranscript` that forms part of the `DeviceAuthentication` structure that is signed or MACed to produce `DeviceAuth`.
+
+The exact derivation of the `SessionTranscript` from the `WalletTransactionTranscript` is to be completed; tracked in [issue #10](https://github.com/openid/dchp/issues/10).
+
+# SD-JWT VC Credential Format {#annex-sd-jwt-vc}
+
+This annex defines how the protocol specified in this document is used with SD-JWT VCs as defined in draft-ietf-oauth-sd-jwt-vc (SD-JWT VC), which builds on RFC 9901 (SD-JWT). It does not redefine the format: the structures referred to in this annex (Issuer-signed JWT, Disclosure, Key Binding JWT (KB-JWT), and the `vct`, `iss` and `cnf` claims) are defined in those documents; the `x5c` JOSE header is defined in RFC 7515 (JWS).
+
+## Credential Format Identifier
+
+The `credential_format` value for SD-JWT VCs is `dc+sd-jwt`.
+
+## Credential Type
+
+Each entry of `credential_types` contains a value of the `vct` claim of an SD-JWT VC. A `CredentialQuery` matches SD-JWT VCs whose `vct` claim is identical to one of the requested values, compared as text strings; the comparison is case-sensitive.
+
+> **Editor's note:** Whether a `CredentialQuery` also matches SD-JWT VCs whose type inherits from the requested `vct` (as OpenID4VP permits for `vct_values`, following the inheritance logic of SD-JWT VC) has not been decided; tracked in [issue #53](https://github.com/openid/dchp/issues/53).
+
+## Path
+
+To be completed, aligning with the claims path pointer used by OpenID4VP and ISO/IEC 18013-5; tracked in [issue #52](https://github.com/openid/dchp/issues/52).
+
+In the response, the requested claim is returned by including the Disclosures needed to reveal it, together with those of any selectively disclosable parent objects.
+
+## Value Matching
+
+To be completed; tracked in [issue #9](https://github.com/openid/dchp/issues/9).
+
+## Issuer Identifiers
+
+When the Issuer-signed JWT carries an `x5c` header, the SD-JWT VC satisfies the `issuer_identifiers` request if one of the values in `x509_ref` is equal to the `keyIdentifier` field of the Authority Key Identifier extension (RFC 5280) of one of the certificates in that `x5c` header.
+
+> **Editor's note:** SD-JWT VC issuers can also be identified without X.509 certificates, through the `iss` claim (an HTTPS URL resolved via JWT VC Issuer Metadata) or a DID. `issuer_identifiers` currently only defines `x509_ref`; how such issuers are requested is to be completed.
+
+## Format-Specific Extensions
+
+For SD-JWT VCs, `format_extensions` contains an `sdjwtExtensions` map:
+
+| Field | Key | Type | Presence | Description |
+|---|---|---|---|---|
+| `sd-jwt_alg_values` | `1` | `[ + tstr ]` | O | Acceptable JWS algorithm values for the Issuer-signed JWT |
+| `kb-jwt_alg_values` | `2` | `[ + tstr ]` | O | Acceptable JWS algorithm values for the Key Binding JWT |
+
+```cddl
+$formatExtensions /= sdjwtExtensions
+
+sdjwtExtensions = {
+  ? sd-jwt_alg_values: 1 => [ + tstr ],  ; JWS "alg" values
+  ? kb-jwt_alg_values: 2 => [ + tstr ],  ; JWS "alg" values
+  * int / tstr => any             ; int = RFU, tstr = application-specific
+}
+```
+
+## Cryptographic Binding
+
+Cryptographic binding for SD-JWT VCs is Key Binding: a KB-JWT signed with the key in the `cnf` claim of the SD-JWT VC, as defined in SD-JWT.
+
+If `support_no_cryptographic_binding` is `false`, the wallet shall present the SD-JWT VC with a KB-JWT. If it is `true`, the wallet may omit the KB-JWT.
+
+## Response Structure
+
+A `CredentialItem` carrying an SD-JWT VC has `credential_format` set to `dc+sd-jwt` and `data` set to `SdJwtData`: a text string containing the SD-JWT presentation in its compact serialization, `<Issuer-signed JWT>~<Disclosure 1>~...~<Disclosure N>~<KB-JWT>`. When no KB-JWT is included, the presentation ends with the trailing `~`, as defined in SD-JWT.
+
+```cddl
+$CredentialData /= SdJwtData
+
+SdJwtData = tstr   ; SD-JWT presentation, compact serialization
+```
+
+## Transaction Data
+
+To be completed; tracked in [issue #4](https://github.com/openid/dchp/issues/4).
+
+## Transaction Transcript
+
+The SHA-256 hash of the CBOR-encoded `WalletTransactionTranscript` for the credential (see [Transaction Transcript](#transaction-transcript)) is used as the value of the `nonce` claim in the KB-JWT.
+
+> **Editor's note:** The string encoding of the hash in the `nonce` claim (e.g., base64url) and the value of the KB-JWT `aud` claim are not yet specified; tracked in [issue #10](https://github.com/openid/dchp/issues/10).
+
+
 # Bibliography
 
 [1] ISO/IEC Directives, Part 2, *Principles and rules for the structure and
@@ -612,4 +793,5 @@ valuable feedback and contributions to this specification.
 
    -00
 
+   * make credential_type an array
    * initial working draft
