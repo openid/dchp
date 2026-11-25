@@ -97,7 +97,11 @@ To be completed.
 
 # Symbols and abbreviated terms
 
-To be completed.
+| Abbreviation / Symbol | Description |
+| :--- | :--- |
+| M | Mandatory |
+| C | Conditional |
+| O | Optional |
 
 # CBOR Encoding {#cbor-encoding}
 
@@ -112,7 +116,7 @@ For CBOR data items encapsulated within a byte string, these requirements only a
 # Credential Request
 > This section does not yet have working group consensus, which is tracked in [issue #24](https://github.com/openid/dchp/issues/24).
 
-The request is sent by the **verifier** (reader) to the **wallet** (holder).
+The request is sent by the **verifier** to the **wallet** (holder).
 
 ## Request Structure
 
@@ -121,13 +125,13 @@ The top-level `CredentialRequest` contains:
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `payload` | `1` | `bytes` | M | CBOR-encoded `RequestPayload` |
-| `reader_auth` | `2` | `COSE_Sign` | O | Optional reader authentication signature |
+| `verifier_auth` | `2` | `COSE_Sign` | O | Optional verifier authentication signature |
 
 The `RequestPayload` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the reader is requesting, keyed by `ScenarioRef` |
+| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the verifier is requesting, keyed by `ScenarioRef` |
 | `CredentialQueries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
@@ -172,7 +176,7 @@ Listing multiple values in `credential_types` is a size optimization for request
 | `issuer_identifiers` | `1` | `IssuerIdentifiers` | Acceptable credential issuers (e.g., X.509 certificate references) |
 | `allow_multiple` | `2` | `bool` | Allow returning multiple credentials of the same type |
 | `credential_auth_data` | `3` | `{ + int / tstr => any }` | Data to be authenticated/signed by the credential presentation |
-| `support_no_cryptographic_binding` | `4` | `bool` | Indicates if the reader accepts responses without cryptographic binding |
+| `support_no_cryptographic_binding` | `4` | `bool` | Indicates if the verifier accepts responses without cryptographic binding |
 
 ### Format-Specific Extensions
 
@@ -230,7 +234,7 @@ The request defines a primary `encryption_context` and optionally additional con
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `key` | `1` | `COSE_Key` | The reader's public key (e.g., HPKE key) |
+| `key` | `1` | `COSE_Key` | The verifier's public key (e.g., HPKE key) |
 | `nonce` | `2` | `bstr` | Nonce value |
 | `algorithms` | `3` | `[ + int ]` | Supported COSE algorithm identifiers (e.g., HPKE ciphersuites) |
 
@@ -239,15 +243,26 @@ The request defines a primary `encryption_context` and optionally additional con
 For non-post-quantum-cryptography (non-PQC) operations, **HPKE** is mandated, potentially based on [draft-ietf-cose-hpke](https://datatracker.ietf.org/doc/draft-ietf-cose-hpke/).
 
 
-# Reader Authentication
+# Verifier Authentication
 
 > This section does not yet have working group consensus, which is tracked in [issue #26](https://github.com/openid/dchp/issues/26).
 
-The verifier can optionally authenticate itself using the `reader_auth` field in the top-level `CredentialRequest`.
+The verifier can optionally authenticate itself using the `verifier_auth` field in the top-level `CredentialRequest`.
 
 - **Structure:** Uses a standard `COSE_Sign` structure.
 - **Payload:** The signature uses a **detached payload**.
 - **Detached payload content:** The raw CBOR-encoded `RequestPayload` together with the **transaction transcript**.
+
+## Public key authentication
+
+This document specifies the following methods to convey the public key used for reader authentication:
+
+- X.509 certificate
+
+Other mechanisms may be used and are out of scope of this document.
+
+When using an X.509 certificate to convey the reader authentication public key, that certificate shall be included as an x5chain element in the protected header of the COSE_Signature structure whose signature is verified with that public key.
+The x5chain element shall contain at least one certificate, encoded and ordered as specified in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360). The first certificate shall contain the reader authentication public key.
 
 
 # Transaction Transcript {#transaction-transcript}
@@ -262,12 +277,12 @@ The transcripts are never transmitted and the verifier and the wallet each const
 
 Two transcript types are defined:
 
-- **`ReaderTransactionTranscript`** — constructed by the **verifier** and used in reader authentication and response encryption.
+- **`VerifierTransactionTranscript`** — constructed by the **verifier** and used in verifier authentication and response encryption.
 - **`WalletTransactionTranscript`** — constructed by the **wallet** for credential authentication. It includes the applicable encryption context reference for the credential being presented, or no encryption context if the credential is unencrypted.
 
 Both share the same base fields; they differ in whether an encryption context reference is present.
 
-## ReaderTransactionTranscript
+## VerifierTransactionTranscript
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -278,8 +293,8 @@ Both share the same base fields; they differ in whether an encryption context re
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `request_hash` | `1` | `bstr` | M | SHA-256 of the CBOR-encoded `RequestPayload` bytes — identical value to the reader transcript |
-| `channel_binding` | `2` | `ChannelBinding` | M | Identical to the reader transcript |
+| `request_hash` | `1` | `bstr` | M | SHA-256 of the CBOR-encoded `RequestPayload` bytes — identical value to the verifier transcript |
+| `channel_binding` | `2` | `ChannelBinding` | M | Identical to the verifier transcript |
 | `encryption_context` | `3` | `int` | O | The `encryption_ref` value from the `CredentialQuery` for this credential; absent when no application-layer encryption is used |
 
 The wallet determines the applicable value from `CredentialQuery.encryption_ref`: if present, it is copied directly into this field; if absent, the field is omitted (indicating the main `encryption_context` is used or no application-layer encryption applies).
@@ -317,7 +332,7 @@ These fields capture the data-transport channel over which the credential presen
 
 | Operation | Transcript used | How it is bound |
 |---|---|---|
-| **Reader authentication** | `ReaderTransactionTranscript` | Combined with the `RequestPayload` bytes as the detached COSE_Sign payload |
+| **Verifier authentication** | `VerifierTransactionTranscript` | Combined with the `RequestPayload` bytes as the detached COSE_Sign payload |
 | **Response encryption** | `WalletTransactionTranscript` for that credential | Supplied as info parameter for HPKE |
 | **Credential authentication** (cryptographic binding) | `WalletTransactionTranscript` for that credential | As defined by the credential format definition, see [Credential Formats](#credential-formats) |
 | **Session key derivation** (BLE/NFC) | `WalletTransactionTranscript` (no encryption context) | Used as an input to the session key derivation function |
@@ -404,9 +419,9 @@ A credential format definition extends the `$formatExtensions` and `$CredentialD
 ; ==========================================
 
 CredentialRequest = {
-  payload:        1 => bstr,      ; CBOR-encoded RequestPayload
-  ? reader_auth:  2 => COSE_Sign, ; Optional reader authentication (detached payload)
-  * int => any                    ; RFU extensions
+  payload:         1 => bstr,      ; CBOR-encoded RequestPayload
+  ? verifier_auth: 2 => COSE_Sign, ; Optional verifier authentication (detached payload)
+  * int => any                     ; RFU extensions
 }
 
 RequestPayload = {
@@ -552,8 +567,8 @@ CredentialItem = {
 ; (RFC 8949, Section 4.2.1).
 ; ==========================================
 
-; Used by the verifier: for reader authentication and as info parameter for response encryption.
-ReaderTransactionTranscript = {
+; Used by the verifier: for verifier authentication and as info parameter for response encryption.
+VerifierTransactionTranscript = {
   request_hash:    1 => bstr,          ; SHA-256 of CBOR-encoded RequestPayload bytes
   channel_binding: 2 => ChannelBinding,
   * int / tstr => any                  ; RFU / application-specific extensions
@@ -562,7 +577,7 @@ ReaderTransactionTranscript = {
 ; Used by the wallet: for credential authentication (as defined by the credential format definition) and response encryption.
 ; Includes the encryption_ref from the CredentialQuery for the credential being presented.
 WalletTransactionTranscript = {
-  request_hash:         1 => bstr,          ; Same value as in ReaderTransactionTranscript
+  request_hash:         1 => bstr,          ; Same value as in VerifierTransactionTranscript
   channel_binding:      2 => ChannelBinding,
   ? encryption_context: 3 => int,           ; The encryption_ref from CredentialQuery;
                                             ; absent when no application-layer encryption is used
@@ -589,7 +604,7 @@ ChannelBinding = {
   ; Capture the data-transport channel over which the presentation is performed.
   ? ble_uuid:                 10 => bstr,           ; 18013-5 BLE (UUID):      EReaderKey bytes
   ? ble_l2cap:                11 => {               ; 18013-5 BLE L2CAP:       EReaderKey + PSM
-                                   uuid: 1 => bstr, ;   Reader ephemeral public key
+                                   uuid: 1 => bstr, ;   Verifier ephemeral public key
                                    psm:  2 => uint  ;   L2CAP Protocol/Service Multiplexer value
                                  },
   ? nfc_static_handover:      12 => bstr,           ; 18013-5 NFC static:      CBOR-encoded NFCHandover
