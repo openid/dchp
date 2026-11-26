@@ -131,14 +131,14 @@ The `RequestPayload` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `ScenarioSets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the verifier is requesting, keyed by `ScenarioRef` |
-| `CredentialQueries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
+| `scenario_sets` | `1` | `{ + ScenarioRef => ScenarioSet }` | M | Map of scenarios the verifier is requesting, keyed by `ScenarioRef` |
+| `credential_queries` | `2` | `{ + CredentialRef => CredentialQuery }` | M | Dictionary of all requested credential definitions |
 | `encryption_context` | `3` | `EncryptionContext` | C | Primary response encryption context; absent when ISO/IEC 18013-5 session encryption is used |
 | `additional_encryption_contexts` | `4` | `{ + int => EncryptionContext }` | O | Additional encryption contexts for multi-key routing, keyed by integer |
 
 ## Scenario Sets
 
-A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet`s are carried as a map in `RequestPayload`, keyed directly by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
+A **ScenarioSet** represents an overarching purpose or business context (e.g., "Age Verification", "Identity Check"). It references the credential definitions via `CredentialRef` and defines the valid combinations a wallet can use to satisfy the scenario. `ScenarioSet` structures are carried in the `scenario_sets` map of `RequestPayload`, keyed by `ScenarioRef`, so the `scenario_ref` field is the map key rather than an item inside the structure.
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -148,7 +148,7 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 | `extensions` | `4` | `{ * int / tstr => any }` | O | Extensions; `int` keys are RFU, `tstr` keys are application-specific |
 
 - A `CredentialCombination` is an array of `CredentialRef` values — all referenced credentials must be presented (logical **AND**).
-- The wallet need only satisfy **one** combination per ScenarioSet (logical **OR** across combinations).
+- The wallet need only satisfy **one** combination per `ScenarioSet` (logical **OR** across combinations).
 
 ## Credential Queries
 
@@ -160,8 +160,8 @@ A `CredentialQuery` defines the exact credential requirements for one or more cr
 | `credential_types` | `2` | `[ + tstr ]` | M | Acceptable credential types (e.g., `["org.iso.18013.5.1.mDL"]`). The content is defined by the credential format definition |
 | `elements_dict` | `3` | `{ + ElementRef => DataElementDef }` | M | Dictionary of requested data elements |
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
-| `general_extensions` | `5` | `generalExtensions` | O | Protocol-level extensions applicable across formats |
-| `format_extensions` | `6` | `$formatExtensions` | O | Format-specific extensions. The content is defined by the credential format definition |
+| `general_extensions` | `5` | `GeneralExtensions` | O | Protocol-level extensions applicable across formats |
+| `format_extensions` | `6` | `$FormatExtensions` | O | Format-specific extensions. The content is defined by the credential format definition |
 | `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
 
 Listing multiple values in `credential_types` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type).  A request containing a `CredentialQuery` where `credential_types` contains n credential types shall be processed as equivalent to a request in which:
@@ -255,14 +255,14 @@ The verifier can optionally authenticate itself using the `verifier_auth` field 
 
 ## Public key authentication
 
-This document specifies the following methods to convey the public key used for reader authentication:
+This document specifies the following methods to convey the public key used for verifier authentication:
 
 - X.509 certificate
 
 Other mechanisms may be used and are out of scope of this document.
 
-When using an X.509 certificate to convey the reader authentication public key, that certificate shall be included as an x5chain element in the protected header of the COSE_Signature structure whose signature is verified with that public key.
-The x5chain element shall contain at least one certificate, encoded and ordered as specified in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360). The first certificate shall contain the reader authentication public key.
+When using an X.509 certificate to convey the verifier authentication public key, that certificate shall be included as an x5chain element in the protected header of the COSE_Signature structure whose signature is verified with that public key.
+The x5chain element shall contain at least one certificate, encoded and ordered as specified in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360). The first certificate shall contain the verifier authentication public key.
 
 
 # Transaction Transcript {#transaction-transcript}
@@ -355,10 +355,10 @@ An `Envelope` contains a credential pool and a scenario map:
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `credentials` | `1` | `{ + CredentialRef => CredentialItem }` | Pool of all credentials returned in this envelope, keyed by `CredentialRef` (the same integer identifiers used in the request's `CredentialQueries`) |
+| `credentials` | `1` | `{ + CredentialRef => CredentialItem }` | Pool of all credentials returned in this envelope, keyed by `CredentialRef` (the same integer identifiers used in the request's `credential_queries`) |
 | `scenarios` | `2` | `{ + ScenarioRef => [ + CredentialRef ] }` | Maps each satisfied `ScenarioRef` to the list of `CredentialRef`s from the pool that satisfy it |
 
-The `CredentialRef` keys in the pool are the **same integers** used in the request's `CredentialQueries` map, so the verifier can directly correlate a returned credential to the query that requested it without any additional mapping.
+The `CredentialRef` keys in the pool are the **same integers** used in the request's `credential_queries` map, so the verifier can directly correlate a returned credential to the query that requested it without any additional mapping.
 
 Each `CredentialItem`:
 
@@ -401,7 +401,7 @@ A credential format definition shall specify:
 9. how the transaction data request (`credential_auth_data`) applies for this format;
 10. how the `WalletTransactionTranscript` is included in the cryptographic binding of the response.
 
-A credential format definition extends the `$formatExtensions` and `$CredentialData` CDDL sockets defined in [CDDL Definitions](#cddl-definitions) with the types it defines for `format_extensions` and `data`.
+A credential format definition extends the `$FormatExtensions` and `$CredentialData` CDDL sockets defined in [CDDL Definitions](#cddl-definitions) with the types it defines for `format_extensions` and `data`.
 
 # CDDL Definitions {#cddl-definitions}
 
@@ -409,7 +409,7 @@ A credential format definition extends the `$formatExtensions` and `$CredentialD
 >
 > External references: `COSE_Sign`, `COSE_Key`, `COSE_Encrypt` are defined in [RFC 9052](https://www.rfc-editor.org/rfc/rfc9052).
 >
-> `$formatExtensions` and `$CredentialData` are sockets (RFC 8610, Section 3.9) that each credential format definition extends, see [Credential Formats](#credential-formats).
+> `$FormatExtensions` and `$CredentialData` are sockets (RFC 8610, Section 3.9) that each credential format definition extends, see [Credential Formats](#credential-formats).
 
 ## Request CDDL
 
@@ -425,8 +425,8 @@ CredentialRequest = {
 }
 
 RequestPayload = {
-  ScenarioSets:                     1 => { + ScenarioRef => ScenarioSet },
-  CredentialQueries:                2 => { + CredentialRef => CredentialQuery },
+  scenario_sets:                    1 => { + ScenarioRef => ScenarioSet },
+  credential_queries:               2 => { + CredentialRef => CredentialQuery },
   ? encryption_context:             3 => EncryptionContext,
   ? additional_encryption_contexts: 4 => { + int => EncryptionContext },
   * int => any                      ; RFU extensions
@@ -469,13 +469,13 @@ CredentialQuery = {
   credential_types:     2 => [ + tstr ],
   elements_dict:        3 => { + ElementRef => DataElementDef },
   requested_elements:   4 => ElementLogic,
-  ? general_extensions: 5 => generalExtensions,
-  ? format_extensions:  6 => $formatExtensions, ; Socket, see below
+  ? general_extensions: 5 => GeneralExtensions,
+  ? format_extensions:  6 => $FormatExtensions, ; Socket, see below
   ? encryption_ref:     7 => int,   ; Key into additional_encryption_contexts; absent = use main
   * int => any                      ; RFU extensions
 }
 
-generalExtensions = {
+GeneralExtensions = {
   ? issuer_identifiers:               1 => IssuerIdentifiers,
   ? allow_multiple:                   2 => bool,
   ? credential_auth_data:             3 => { + int / tstr => any },
@@ -483,9 +483,9 @@ generalExtensions = {
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 
-; $formatExtensions is a socket (RFC 8610, Section 3.9): each credential
+; $FormatExtensions is a socket (RFC 8610, Section 3.9): each credential
 ; format definition adds its own extensions structure to it, e.g.
-;   $formatExtensions /= mdocExtensions
+;   $FormatExtensions /= MdocExtensions
 
 IssuerIdentifiers = {
   ? x509_ref: 1 => [ + bstr ],
@@ -617,6 +617,10 @@ ChannelBinding = {
 
 ```
 
+# Security Considerations
+
+To be completed.
+
 # Conventions
 
 In this document, the following verbal forms are used:
@@ -667,7 +671,7 @@ An mdoc satisfies the `issuer_identifiers` request if one of the values in `x509
 
 ## Format-Specific Extensions
 
-For mdocs, `format_extensions` contains an `mdocExtensions` map:
+For mdocs, `format_extensions` contains an `MdocExtensions` map:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
@@ -677,9 +681,9 @@ For mdocs, `format_extensions` contains an `mdocExtensions` map:
 > **Note:** A verifier that has no constraint on one of the two algorithm classes should include the field with a permissive list of acceptable values rather than omitting it.
 
 ```cddl
-$formatExtensions /= mdocExtensions
+$FormatExtensions /= MdocExtensions
 
-mdocExtensions = {
+MdocExtensions = {
   ? issuer_alg_values: 1 => [ + int ],   ; COSE algorithm identifiers
   ? device_alg_values: 2 => [ + int ],   ; COSE algorithm identifiers
   * int / tstr => any             ; int = RFU, tstr = application-specific
@@ -746,19 +750,19 @@ When the Issuer-signed JWT carries an `x5c` header, the SD-JWT VC satisfies the 
 
 ## Format-Specific Extensions
 
-For SD-JWT VCs, `format_extensions` contains an `sdjwtExtensions` map:
+For SD-JWT VCs, `format_extensions` contains an `SdJwtExtensions` map:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `sd-jwt_alg_values` | `1` | `[ + tstr ]` | O | Acceptable JWS algorithm values for the Issuer-signed JWT |
-| `kb-jwt_alg_values` | `2` | `[ + tstr ]` | O | Acceptable JWS algorithm values for the Key Binding JWT |
+| `sd_jwt_alg_values` | `1` | `[ + tstr ]` | O | Acceptable JWS algorithm values for the Issuer-signed JWT |
+| `kb_jwt_alg_values` | `2` | `[ + tstr ]` | O | Acceptable JWS algorithm values for the Key Binding JWT |
 
 ```cddl
-$formatExtensions /= sdjwtExtensions
+$FormatExtensions /= SdJwtExtensions
 
-sdjwtExtensions = {
-  ? sd-jwt_alg_values: 1 => [ + tstr ],  ; JWS "alg" values
-  ? kb-jwt_alg_values: 2 => [ + tstr ],  ; JWS "alg" values
+SdJwtExtensions = {
+  ? sd_jwt_alg_values: 1 => [ + tstr ],  ; JWS "alg" values
+  ? kb_jwt_alg_values: 2 => [ + tstr ],  ; JWS "alg" values
   * int / tstr => any             ; int = RFU, tstr = application-specific
 }
 ```
@@ -803,6 +807,14 @@ Determinism* (work in progress)
 We would like to thank TBD for their
 valuable feedback and contributions to this specification.
 
+# Notices
+
+Copyright (c) 2026 The OpenID Foundation.
+
+The OpenID Foundation (OIDF) grants to any Contributor, developer, implementer, or other interested party a non-exclusive, royalty free, worldwide copyright license to reproduce, prepare derivative works from, distribute, perform and display, this Implementers Draft, Final Specification, or Final Specification Incorporating Errata Corrections solely for the purposes of (i) developing specifications, and (ii) implementing Implementers Drafts, Final Specifications, and Final Specification Incorporating Errata Corrections based on such documents, provided that attribution be made to the OIDF as the source of the material, but that such attribution does not indicate an endorsement by the OIDF.
+
+The technology described in this specification was made available from contributions from various sources, including members of the OpenID Foundation and others. Although the OpenID Foundation has taken steps to help ensure that the technology is available for distribution, it takes no position regarding the validity or scope of any intellectual property or other rights that might be claimed to pertain to the implementation or use of the technology described in this specification or the extent to which any license under such rights might or might not be available; neither does it represent that it has made any independent effort to identify any such rights. The OpenID Foundation and the contributors to this specification make no (and hereby expressly disclaim any) warranties (express, implied, or otherwise), including implied warranties of merchantability, non-infringement, fitness for a particular purpose, or title, related to this specification, and the entire risk as to implementing this specification is assumed by the implementer. The OpenID Intellectual Property Rights policy (found at openid.net) requires contributors to offer a patent promise not to assert certain patent claims against other contributors and against implementers. OpenID invites any interested party to bring to its attention any copyrights, patents, patent applications, or other proprietary rights that may cover technology that may be required to practice this specification.
+
 # Document History
 
 [[ To be removed from the final specification ]]
@@ -810,5 +822,6 @@ valuable feedback and contributions to this specification.
 -00
 
  * adds definition on deterministic cbor encoding
+ * add Security Considerations placeholder and Notices appendix
  * make credential_type an array
  * initial working draft
