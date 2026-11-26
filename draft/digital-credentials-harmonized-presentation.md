@@ -573,9 +573,9 @@ ChannelBinding = {
   ; --- Engagement fields (keys 1–9) ---
   ; Capture how the credential request was initiated.
   ? qr_device_engagement:               1 => bstr,  ; 18013-5 QR:              CBOR-encoded DeviceEngagement
-  ? reverse_qr_device_engagement:       2 => bstr,  ; 18013-5 Reverse QR:      CBOR-encoded DeviceEngagement
-  ? nfc_static_handover_engagement:     3 => bstr,  ; 18013-5 NFC static:      CBOR-encoded DeviceEngagement
-  ? nfc_negotiated_handover_engagement: 4 => bstr,  ; 18013-5 NFC negotiated:  CBOR-encoded DeviceEngagement
+  ? reverse_qr_device_engagement:       2 => bstr,  ; 18013-5 Reverse QR:      CBOR-encoded ReaderEngagement
+  ? nfc_static_handover_engagement:     3 => bstr,  ; 18013-5 NFC static:      Handover select message
+  ? nfc_negotiated_handover_engagement: 4 => bstr,  ; 18013-5 NFC negotiated:  Handover select and response message
   ? cce_handover:                       5 => bstr,  ; CCE:                     CBOR-encoded DeviceEngagement and ReaderEngagement
   ? openid4vp_request_uri:              6 => tstr,  ; OpenID4VP:               request_uri from the authorization request
   ? openid4vp_client_id:                7 => tstr,  ; OpenID4VP:               client_id from the authorization request
