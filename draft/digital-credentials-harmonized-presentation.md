@@ -114,7 +114,7 @@ The top-level `CredentialRequest` contains:
 
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
-| `payload` | `1` | `bytes` | M | CBOR-encoded `RequestPayload` |
+| `payload` | `1` | `bstr` | M | CBOR-encoded `RequestPayload` |
 | `verifier_auth` | `2` | `COSE_Sign` | O | Optional verifier authentication signature |
 
 The `RequestPayload` contains:
@@ -135,9 +135,9 @@ A **ScenarioSet** represents an overarching purpose or business context (e.g., "
 | `mandatory` | `1` | `bool` | M | Whether satisfying this scenario is required |
 | `combinations` | `2` | `[ + CredentialCombination ]` | M | Valid credential combinations (logical **OR** between array items) |
 | `purpose_id` | `3` | `[ controller_id: tstr, + int ]` | M | Namespaced identifier defining the purpose of the scenario |
-| `extensions` | `4` | `{ * int / tstr => any }` | O | Extensions; `int` keys are RFU, `tstr` keys are application-specific |
+| `extensions` | `4` | `{ * (int / tstr) => any }` | O | Extensions; `int` keys are RFU, `tstr` keys are application-specific |
 
-- A `CredentialCombination` is an array of `CredentialRef` values — all referenced credentials must be presented (logical **AND**).
+- A `CredentialCombination` is an array of `CredentialRef` values — all referenced credentials shall be presented (logical **AND**).
 - The wallet need only satisfy **one** combination per `ScenarioSet` (logical **OR** across combinations).
 
 ## Credential Queries
@@ -152,7 +152,7 @@ A `CredentialQuery` defines the exact credential requirements for one or more cr
 | `requested_elements` | `4` | `ElementLogic` | M | Boolean logic tree defining which elements are required |
 | `general_extensions` | `5` | `GeneralExtensions` | O | Protocol-level extensions applicable across formats |
 | `format_extensions` | `6` | `$FormatExtensions` | O | Format-specific extensions. The content is defined by the credential format definition |
-| `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the main `encryption_context` is used |
+| `encryption_ref` | `7` | `int` | O | Reference to an entry in `additional_encryption_contexts`; absent means the primary `encryption_context` is used |
 
 Listing multiple values in `credential_types` is a size optimization for requesting the same data elements from credential types that are closely related (e.g., newer versions of the same credential type).  A request containing a `CredentialQuery` where `credential_types` contains n credential types shall be processed as equivalent to a request in which:
 
@@ -165,7 +165,7 @@ Listing multiple values in `credential_types` is a size optimization for request
 |---|---|---|---|
 | `issuer_identifiers` | `1` | `IssuerIdentifiers` | Acceptable credential issuers (e.g., X.509 certificate references) |
 | `allow_multiple` | `2` | `bool` | Allow returning multiple credentials of the same type |
-| `credential_auth_data` | `3` | `{ + int / tstr => any }` | Data to be authenticated/signed by the credential presentation |
+| `credential_auth_data` | `3` | `{ + (int / tstr) => any }` | Data to be authenticated/signed by the credential presentation |
 | `support_no_cryptographic_binding` | `4` | `bool` | Indicates if the verifier accepts responses without cryptographic binding |
 
 ### Format-Specific Extensions
@@ -176,7 +176,7 @@ The content of `format_extensions` is defined by the credential format definitio
 
 | Field | Key | Type | Description |
 |---|---|---|---|
-| `x509_ref` | `1` | `[ + bstr ]` | Array of authoritykeyidentifiers|
+| `x509_ref` | `1` | `[ + bstr ]` | Array of authority key identifiers |
 
 ## Data Elements & Logic
 
@@ -192,10 +192,10 @@ The content of `format_extensions` is defined by the credential format definitio
 
 The `requested_elements` field uses a three-level structure:
 
-```
-ElementLogic  = [ + OrGroup ]   ; Level 1 — AND: ALL OrGroups must be satisfied
-OrGroup       = [ + AndGroup ]  ; Level 2 — OR:  AT LEAST ONE AndGroup must be satisfied
-AndGroup      = [ + ElementRef ] ; Level 3 — AND: ALL referenced elements must be provided
+```cddl
+ElementLogic  = [ + OrGroup ]    ; Level 1 — AND: ALL OrGroups shall be satisfied
+OrGroup       = [ + AndGroup ]   ; Level 2 — OR:  AT LEAST ONE AndGroup shall be satisfied
+AndGroup      = [ + ElementRef ] ; Level 3 — AND: ALL referenced elements shall be provided
 ```
 
 This enables expressing complex requirements such as:
@@ -213,7 +213,7 @@ The protocol provides **application-layer response encryption** via `EncryptionC
 
 | Transport type | Encryption requirement |
 |---|---|
-| No session-layer encryption (e.g., DC API, scheme-based) | **Mandatory** — protocol-level response encryption must be used |
+| No session-layer encryption (e.g., DC API, scheme-based) | **Mandatory** — protocol-level response encryption shall be used |
 | Session encryption present (e.g., ISO/IEC 18013-5 BLE/NFC) | **Not applicable** — protocol-level encryption may be omitted |
 
 ## Multi-Key Routing
@@ -275,7 +275,7 @@ Both share the same base fields; they differ in whether an encryption context re
 | Field | Key | Type | Presence | Description |
 |---|---|---|---|---|
 | `request_hash` | `1` | `bstr` | M | SHA-256 of the CBOR-encoded `RequestPayload` bytes |
-| `channel_binding` | `2` | `ChannelBinding` | M | Transport- and engagement-specific binding; see §5.3 |
+| `channel_binding` | `2` | `ChannelBinding` | M | Transport- and engagement-specific binding; see [Channel Binding](#channel-binding) |
 
 ## WalletTransactionTranscript
 
@@ -285,11 +285,11 @@ Both share the same base fields; they differ in whether an encryption context re
 | `channel_binding` | `2` | `ChannelBinding` | M | Identical to the verifier transcript |
 | `encryption_context` | `3` | `int` | O | The `encryption_ref` value from the `CredentialQuery` for this credential; absent when no application-layer encryption is used |
 
-The wallet determines the applicable value from `CredentialQuery.encryption_ref`: if present, it is copied directly into this field; if absent, the field is omitted (indicating the main `encryption_context` is used or no application-layer encryption applies).
+The wallet determines the applicable value from `CredentialQuery.encryption_ref`: if present, it is copied directly into this field; if absent, the field is omitted (indicating the primary `encryption_context` is used or no application-layer encryption applies).
 
-## Channel Binding
+## Channel Binding {#channel-binding}
 
-`ChannelBinding` is a CBOR map capturing the engagement and transmission channel used to initiate the session. The fields present depend on the transport. At most one engagement field and at most one transmission field will be present for any given session.
+`ChannelBinding` is a CBOR map capturing the engagement and transmission channel used to initiate the session. The fields present depend on the transport. The fields of at most one engagement method and at most one transmission method are present for any given session.
 
 ### Engagement fields
 
@@ -301,9 +301,9 @@ These fields capture how the credential request was initiated (device engagement
 | `reverse_qr_device_engagement` | `2` | `bstr` | 18013-5 Reverse QR | CBOR-encoded `ReaderEngagement` structure from reverse QR engagement |
 | `nfc_static_handover_engagement` | `3` | `bstr` | 18013-5 NFC static | Handover select message from NFC static handover |
 | `nfc_negotiated_handover_engagement` | `4` | `bstr` | 18013-5 NFC negotiated | Handover select and response message from NFC negotiated handover |
-| `nfcv2_handover` | `5` | `bstr` | CBOR-encoded `DeviceEngagement` and `ReaderEngagement` structures from NFCv2 handover |
-| `oidc4vp_request_uri` | `6` | `tstr` | OID4VP | The `request_uri` value from the OID4VP authorisation request |
-| `oidc4vp_client_id` | `7` | `tstr` | OID4VP | The `client_id` from the OID4VP authorisation request |
+| `cce_handover` | `5` | `bstr` | CCE | CBOR-encoded `DeviceEngagement` and `ReaderEngagement` structures from CCE handover |
+| `openid4vp_request_uri` | `6` | `tstr` | OpenID4VP | The `request_uri` value from the OpenID4VP authorization request |
+| `openid4vp_client_id` | `7` | `tstr` | OpenID4VP | The `client_id` from the OpenID4VP authorization request |
 | `dc_api_origin` | `8` | `tstr` | DC API | Web origin (`scheme://host[:port]`) of the page invoking the Digital Credentials API |
 
 ### Transmission fields
@@ -320,7 +320,7 @@ These fields capture the data-transport channel over which the credential presen
 
 | Operation | Transcript used | How it is bound |
 |---|---|---|
-| **Verifier authentication** | `VerifierTransactionTranscript` | Combined with the `RequestPayload` bytes as the detached COSE_Sign payload |
+| **Verifier authentication** | `VerifierTransactionTranscript` | Combined with the `RequestPayload` bytes as the detached `COSE_Sign` payload |
 | **Response encryption** | `WalletTransactionTranscript` for that credential | Supplied as info parameter for HPKE |
 | **Credential authentication** (cryptographic binding) | `WalletTransactionTranscript` for that credential | As defined by the credential format definition, see [Credential Formats](#credential-formats) |
 | **Session key derivation** (BLE/NFC) | `WalletTransactionTranscript` (no encryption context) | Used as an input to the session key derivation function |
@@ -330,12 +330,12 @@ These fields capture the data-transport channel over which the credential presen
 
 > This section does not yet have working group consensus, which is tracked in [issue #28](https://github.com/openid/dchp/issues/28).
 
-The `CredentialResponse` contains any combination of an optional unencrypted envelope and zero or more encrypted envelopes. Both fields are optional; at least one should be present in a well-formed response. Each envelope is **self-contained**: it holds its own credential pool and its own scenario map. A credential that must appear in multiple envelopes is duplicated across them; no cross-envelope references exist.
+The `CredentialResponse` contains any combination of an optional unencrypted envelope and zero or more encrypted envelopes. Both fields are optional; at least one should be present in a well-formed response. Each envelope is **self-contained**: it holds its own credential pool and its own scenario map. A credential that needs to appear in multiple envelopes is duplicated across them; no cross-envelope references exist.
 
 | Field | Key | Type | Description |
 |---|---|---|---|
 | `unencrypted` | `1` | `Envelope` | Plaintext envelope |
-| `encrypted` | `2` | `[ + COSE_Encrypt ]` | Each item decrypts to `bytes .cbor Envelope` |
+| `encrypted` | `2` | `[ + COSE_Encrypt ]` | Each item decrypts to `bstr .cbor Envelope` |
 
 ## Envelope Structure
 
@@ -431,7 +431,7 @@ EncryptionContext = {
   key:        1 => COSE_Key,
   nonce:      2 => bstr,
   algorithms: 3 => [ + int ],     ; COSE algorithm identifiers (e.g. HPKE ciphersuites)
-  * int / tstr => any             ; RFU / application-specific extensions
+  * (int / tstr) => any           ; RFU / application-specific extensions
 }
 
 ; ==========================================
@@ -441,8 +441,8 @@ EncryptionContext = {
 ScenarioSet = {
   mandatory:    1 => bool,
   combinations: 2 => [ + CredentialCombination ],
-  purpose_id:   3 => [ controlled_id: tstr, + int ],
-  ? extensions: 4 => { * int / tstr => any }, ; int = RFU, tstr = application-specific
+  purpose_id:   3 => [ controller_id: tstr, + int ],
+  ? extensions: 4 => { * (int / tstr) => any }, ; int = RFU, tstr = application-specific
   * int => any                    ; RFU extensions
 }
 
@@ -459,16 +459,16 @@ CredentialQuery = {
   requested_elements:   4 => ElementLogic,
   ? general_extensions: 5 => GeneralExtensions,
   ? format_extensions:  6 => $FormatExtensions, ; Socket, see below
-  ? encryption_ref:     7 => int,   ; Key into additional_encryption_contexts; absent = use main
+  ? encryption_ref:     7 => int,   ; Key into additional_encryption_contexts; absent = use primary
   * int => any                      ; RFU extensions
 }
 
 GeneralExtensions = {
   ? issuer_identifiers:               1 => IssuerIdentifiers,
   ? allow_multiple:                   2 => bool,
-  ? credential_auth_data:             3 => { + int / tstr => any },
+  ? credential_auth_data:             3 => { + (int / tstr) => any },
   ? support_no_cryptographic_binding: 4 => bool,
-  * int / tstr => any             ; int = RFU, tstr = application-specific
+  * (int / tstr) => any           ; int = RFU, tstr = application-specific
 }
 
 ; $FormatExtensions is a socket (RFC 8610, Section 3.9): each credential
@@ -477,7 +477,7 @@ GeneralExtensions = {
 
 IssuerIdentifiers = {
   ? x509_ref: 1 => [ + bstr ],
-  * int / tstr => [ + any ]       ; int = RFU, tstr = application-specific
+  * (int / tstr) => [ + any ]     ; int = RFU, tstr = application-specific
 }
 
 ; ==========================================
@@ -494,33 +494,26 @@ DataElementDef = {
 }
 
 ; Conjunctive Normal Form (CNF): AND of OR of AND
-ElementLogic = [ + OrGroup ]    ; Level 1 (AND): All OrGroups must be satisfied
-OrGroup      = [ + AndGroup ]   ; Level 2 (OR):  At least one AndGroup must be satisfied
-AndGroup     = [ + ElementRef ] ; Level 3 (AND): All referenced elements must be provided
+ElementLogic = [ + OrGroup ]    ; Level 1 (AND): All OrGroups shall be satisfied
+OrGroup      = [ + AndGroup ]   ; Level 2 (OR):  At least one AndGroup shall be satisfied
+AndGroup     = [ + ElementRef ] ; Level 3 (AND): All referenced elements shall be provided
 ```
 
 ## Response CDDL
 
 ```cddl
 ; ==========================================
-; PRIMITIVE TYPE ALIASES
-; ==========================================
-
-; full-date is defined in RFC 8943 as CBOR tag 1004 applied to a text string (tstr).
-full-date = #6.1004(tstr)
-
-; ==========================================
 ; TOP-LEVEL RESPONSE
 ; ==========================================
 
 CredentialResponse = {
   ? unencrypted:  1 => Envelope,
-  ? encrypted:    2 => [ + COSE_Encrypt ], ; Each item decrypts to bytes .cbor Envelope
+  ? encrypted:    2 => [ + COSE_Encrypt ], ; Each item decrypts to bstr .cbor Envelope
   * int => any                             ; RFU extensions
 }
 
 ; Both unencrypted and encrypted envelopes share the same structure.
-; Each envelope is self-contained: credentials that must appear in multiple
+; Each envelope is self-contained: credentials that need to appear in multiple
 ; envelopes are duplicated; no cross-envelope references are permitted.
 Envelope = {
   credentials:    1 => { + CredentialRef => CredentialItem },
@@ -544,21 +537,21 @@ CredentialItem = {
 
 
 
-*External type references: `COSE_Sign`, `COSE_Key`, `COSE_Encrypt` — defined in [RFC 9052](https://www.rfc-editor.org/rfc/rfc9052) (COSE); `COSE_X509` — defined in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360); `full-date` — defined in [RFC 8943](https://www.rfc-editor.org/rfc/rfc8943) (CBOR Tags for Date).*
+*External type references: `COSE_Sign`, `COSE_Key`, `COSE_Encrypt` — defined in [RFC 9052](https://www.rfc-editor.org/rfc/rfc9052) (COSE); `COSE_X509` — defined in [RFC 9360](https://www.rfc-editor.org/rfc/rfc9360).*
 
 ## Transaction Transcript CDDL
 
 ```cddl
 ; ==========================================
 ; TRANSACTION TRANSCRIPTS
-; Deterministic CBOR encoding (RFC 8949 §4.2) is REQUIRED for all transcript values.
+; Deterministic CBOR encoding (RFC 8949 §4.2) shall be used for all transcript values.
 ; ==========================================
 
 ; Used by the verifier: for verifier authentication and as info parameter for response encryption.
 VerifierTransactionTranscript = {
   request_hash:    1 => bstr,          ; SHA-256 of CBOR-encoded RequestPayload bytes
   channel_binding: 2 => ChannelBinding,
-  * int / tstr => any                  ; RFU / application-specific extensions
+  * (int / tstr) => any                ; RFU / application-specific extensions
 }
 
 ; Used by the wallet: for credential authentication (as defined by the credential format definition) and response encryption.
@@ -568,24 +561,25 @@ WalletTransactionTranscript = {
   channel_binding:      2 => ChannelBinding,
   ? encryption_context: 3 => int,           ; The encryption_ref from CredentialQuery;
                                             ; absent when no application-layer encryption is used
-  * int / tstr => any                       ; RFU / application-specific extensions
+  * (int / tstr) => any                     ; RFU / application-specific extensions
 }
 
 ; ==========================================
 ; CHANNEL BINDING
-; At most one engagement field and at most one transmission field are present per session.
+; The fields of at most one engagement method and one transmission method are present per session.
 ; ==========================================
 
 ChannelBinding = {
   ; --- Engagement fields (keys 1–9) ---
   ; Capture how the credential request was initiated.
-  ? qr_device_engagement:              1 => bstr,  ; 18013-5 QR:              CBOR-encoded DeviceEngagement
-  ? reverse_qr_device_engagement:      2 => bstr,  ; 18013-5 Reverse QR:      CBOR-encoded DeviceEngagement
-  ? nfc_static_handover_engagement:    3 => bstr,  ; 18013-5 NFC static:      CBOR-encoded DeviceEngagement
-  ? nfc_negotiated_handover_engagement: 4 => bstr, ; 18013-5 NFC negotiated:  CBOR-encoded DeviceEngagement
-  ? oidc4vp_request_uri:               5 => tstr,  ; OID4VP:                  request_uri from the authorisation request
-  ? oidc4vp_client_id:                 6 => tstr,  ; OID4VP:                  client_id from the authorisation request
-  ? dc_api_origin:                     7 => tstr,  ; DC API:                  web origin (scheme://host[:port])
+  ? qr_device_engagement:               1 => bstr,  ; 18013-5 QR:              CBOR-encoded DeviceEngagement
+  ? reverse_qr_device_engagement:       2 => bstr,  ; 18013-5 Reverse QR:      CBOR-encoded ReaderEngagement
+  ? nfc_static_handover_engagement:     3 => bstr,  ; 18013-5 NFC static:      Handover select message
+  ? nfc_negotiated_handover_engagement: 4 => bstr,  ; 18013-5 NFC negotiated:  Handover select and response message
+  ? cce_handover:                       5 => bstr,  ; CCE:                     CBOR-encoded DeviceEngagement and ReaderEngagement
+  ? openid4vp_request_uri:              6 => tstr,  ; OpenID4VP:               request_uri from the authorization request
+  ? openid4vp_client_id:                7 => tstr,  ; OpenID4VP:               client_id from the authorization request
+  ? dc_api_origin:                      8 => tstr,  ; DC API:                  web origin (scheme://host[:port])
 
   ; --- Transmission fields (keys 10–19) ---
   ; Capture the data-transport channel over which the presentation is performed.
@@ -596,10 +590,10 @@ ChannelBinding = {
                                  },
   ? nfc_static_handover:      12 => bstr,           ; 18013-5 NFC static:      CBOR-encoded NFCHandover
   ? nfc_negotiated_handover:  13 => bstr,           ; 18013-5 NFC negotiated:  CBOR-encoded NFCHandover
-  ? nfcv2:                    14 => bstr,           ; NFC v2:                  NFC v2 transmission data
+  ? cce:                      14 => bstr,           ; CCE:                     CCE (previously called NFC v2) transmission data
   ? wifi_aware:               15 => bstr,           ; 18013-5 WiFi Aware:      engagement data
 
-  * int / tstr => any                               ; RFU / application-specific extensions
+  * (int / tstr) => any                             ; RFU / application-specific extensions
 }
 
 ```
@@ -673,7 +667,7 @@ $FormatExtensions /= MdocExtensions
 MdocExtensions = {
   ? issuer_alg_values: 1 => [ + int ],   ; COSE algorithm identifiers
   ? device_alg_values: 2 => [ + int ],   ; COSE algorithm identifiers
-  * int / tstr => any             ; int = RFU, tstr = application-specific
+  * (int / tstr) => any           ; int = RFU, tstr = application-specific
 }
 ```
 
@@ -750,7 +744,7 @@ $FormatExtensions /= SdJwtExtensions
 SdJwtExtensions = {
   ? sd_jwt_alg_values: 1 => [ + tstr ],  ; JWS "alg" values
   ? kb_jwt_alg_values: 2 => [ + tstr ],  ; JWS "alg" values
-  * int / tstr => any             ; int = RFU, tstr = application-specific
+  * (int / tstr) => any           ; int = RFU, tstr = application-specific
 }
 ```
 
@@ -801,10 +795,11 @@ The technology described in this specification was made available from contribut
 
 # Document History
 
-   [[ To be removed from the final specification ]]
+[[ To be removed from the final specification ]]
 
-   -00
+-00
 
-   * add Security Considerations placeholder and Notices appendix
-   * make credential_type an array
-   * initial working draft
+* fix inconsistencies between CDDL/prose text
+* add Security Considerations placeholder and Notices appendix
+* make credential_type an array
+* initial working draft
